@@ -28,6 +28,7 @@ pub mod config;
 pub mod cron;
 pub mod db;
 mod error;
+pub mod gateway;
 pub mod graphql;
 pub mod helper;
 mod lookup;

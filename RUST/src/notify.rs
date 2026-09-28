@@ -219,13 +219,26 @@ impl Yekonga {
                 .unwrap_or_else(|e| e.into_inner()),
         )
         .clone();
-        match function {
-            Some(function) => function(note).await,
-            None => tracing::warn!(
-                channel,
-                recipient = %crate::auth::string_of(note.get("recipient")),
-                "notification not sent: no {channel} sender is registered"
-            ),
+        if let Some(function) = function {
+            function(note).await;
+            return;
         }
+
+        // No registered hook: use a built-in provider where one exists.
+        let recipient = crate::auth::string_of(note.get("recipient"));
+        let content = crate::auth::string_of(note.get("content"));
+        if channel == "SMS" && !self.config().api_gateway.sms.api_key.is_empty() {
+            let result = self.send_sms_builtin(&recipient, &content).await;
+            if result.status != "SUCCESS" {
+                tracing::warn!(channel, recipient, message = %result.message, "SMS send failed");
+            }
+            return;
+        }
+
+        tracing::warn!(
+            channel,
+            recipient,
+            "notification not sent: no {channel} sender is registered"
+        );
     }
 }
