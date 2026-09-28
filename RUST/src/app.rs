@@ -918,10 +918,19 @@ fn default_backend(config: &YekongaConfig) -> Arc<dyn Backend> {
             tracing::info!(dir = %dir.display(), "using the local database");
             Arc::new(LocalBackend::open(dir))
         }
+        #[cfg(feature = "mongodb")]
+        Some(DatabaseKind::Mongodb) => {
+            Arc::new(crate::db::MongoBackend::new(config.database.clone()))
+        }
+        #[cfg(feature = "mysql")]
+        Some(DatabaseKind::Mysql | DatabaseKind::Sql) => {
+            Arc::new(crate::db::SqlBackend::new(config.database.clone()))
+        }
+        #[allow(unreachable_patterns)]
         Some(kind) => {
             tracing::error!(
                 kind = kind.as_str(),
-                "this database kind is not ported yet; queries will fail"
+                "this database kind is not enabled in this build (see the crate features); queries will fail"
             );
             Arc::new(UnsupportedBackend(kind.as_str().to_string()))
         }

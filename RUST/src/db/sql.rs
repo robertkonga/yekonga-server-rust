@@ -698,6 +698,10 @@ fn set_clause(model: &DataModel, fields: &DataMap) -> (String, Vec<SqlValue>) {
 // ----- backend -------------------------------------------------------------------------
 
 impl Backend for SqlBackend {
+    fn kind(&self) -> &str {
+        "mysql"
+    }
+
     fn find<'a>(&'a self, query: &'a Query) -> DbFuture<'a, Vec<DataMap>> {
         Box::pin(self.timed(async move {
             self.migrate(&query.model).await?;

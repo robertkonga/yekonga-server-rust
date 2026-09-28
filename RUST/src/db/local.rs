@@ -146,6 +146,10 @@ fn ready<'a, T: Send + 'a>(result: Result<T, DbError>) -> DbFuture<'a, T> {
 }
 
 impl Backend for LocalBackend {
+    fn kind(&self) -> &str {
+        "local"
+    }
+
     fn find<'a>(&'a self, query: &'a Query) -> DbFuture<'a, Vec<DataMap>> {
         ready(self.find_sync(query))
     }

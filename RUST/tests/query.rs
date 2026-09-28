@@ -744,3 +744,27 @@ async fn authorization_server_loads_the_user() {
         authorization_server_loads_the_user_body(app).await;
     }
 }
+
+#[test]
+fn config_selects_the_backend() {
+    let kind = |kind: &str| {
+        let config: YekongaConfig = serde_json::from_value(
+            json!({"appName": "backend-selection-test", "database": {"kind": kind}}),
+        )
+        .unwrap();
+        Yekonga::new(config, DatabaseStructure::default())
+            .backend()
+            .kind()
+            .to_string()
+    };
+
+    assert_eq!(kind(""), "local", "local is the default");
+    assert_eq!(kind("local"), "local");
+    #[cfg(feature = "mongodb")]
+    assert_eq!(kind("mongodb"), "mongodb");
+    #[cfg(feature = "mysql")]
+    {
+        assert_eq!(kind("mysql"), "mysql");
+        assert_eq!(kind("sql"), "mysql");
+    }
+}

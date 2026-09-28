@@ -102,6 +102,9 @@ impl Query {
 /// Storage for records. Records are JSON objects keyed by a string `_id`;
 /// dates are RFC 3339 strings and ids 24-hex-digit strings.
 pub trait Backend: Send + Sync + 'static {
+    /// The `database.kind` this backend serves (`"local"`, `"mongodb"`, `"mysql"`).
+    fn kind(&self) -> &str;
+
     /// Matching records, sorted, skipped and limited.
     fn find<'a>(&'a self, query: &'a Query) -> DbFuture<'a, Vec<DataMap>>;
 
@@ -174,6 +177,9 @@ impl UnsupportedBackend {
 }
 
 impl Backend for UnsupportedBackend {
+    fn kind(&self) -> &str {
+        &self.0
+    }
     fn find<'a>(&'a self, _: &'a Query) -> DbFuture<'a, Vec<DataMap>> {
         self.fail()
     }

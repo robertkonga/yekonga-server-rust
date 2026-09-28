@@ -329,6 +329,10 @@ fn doc_to_json(doc: &Document) -> Map<String, Value> {
 // ----- backend ---------------------------------------------------------------------
 
 impl Backend for MongoBackend {
+    fn kind(&self) -> &str {
+        "mongodb"
+    }
+
     fn find<'a>(&'a self, query: &'a Query) -> DbFuture<'a, Vec<DataMap>> {
         Box::pin(self.timed(async move {
             Ok(self
