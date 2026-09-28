@@ -32,11 +32,8 @@ pub(crate) fn register_routes(app: &Yekonga) {
         });
     }
 
-    app.all("/excel-to-csv", |_req, res| async move {
-        res.status(501).json(&json!({
-            "status": "error",
-            "error": "excel-to-csv is not supported by the Rust port yet",
-        }));
+    app.all("/excel-to-csv", |req, res| async move {
+        excel_to_csv(req, res).await;
     });
 
     app.all("/download/:filename.:ext", |req, res| async move {
@@ -58,6 +55,103 @@ pub(crate) fn register_routes(app: &Yekonga) {
 /// accepts one under `file`.
 fn path_is_multiple(req: &Request) -> bool {
     req.path().trim_end_matches('/').ends_with("upload-files")
+}
+
+/// The multipart boundary of the request, if it is multipart/form-data.
+fn boundary(req: &Request) -> Option<String> {
+    req.header("content-type")
+        .split("boundary=")
+        .nth(1)
+        .map(|b| b.trim_matches('"').to_string())
+}
+
+/// Reads the uploaded workbook's first sheet and returns it as CSV text (Go's
+/// `/excel-to-csv`).
+async fn excel_to_csv(req: Request, res: Response) {
+    let Some(boundary) = boundary(&req) else {
+        res.status(415).text("Expected multipart/form-data");
+        return;
+    };
+    let body = req.raw_body().clone();
+    let mut multipart = multer::Multipart::new(
+        stream::once(async move { Ok::<Bytes, std::io::Error>(body) }),
+        boundary,
+    );
+
+    let mut data = None;
+    while let Ok(Some(part)) = multipart.next_field().await {
+        if part.name() == Some("file") {
+            data = part.bytes().await.ok();
+            break;
+        }
+    }
+    let Some(data) = data else {
+        res.status(400).text("Error retrieving the file");
+        return;
+    };
+
+    match workbook_to_csv(&data) {
+        Ok(csv) => res.json(&json!({"status": "success", "csv": csv})),
+        Err(err) => res
+            .status(400)
+            .json(&json!({"status": "error", "error": err})),
+    };
+}
+
+/// Converts the first worksheet of an xlsx/xls workbook to CSV text.
+fn workbook_to_csv(data: &[u8]) -> std::result::Result<String, String> {
+    use calamine::{Data, Reader};
+
+    let cursor = std::io::Cursor::new(data.to_vec());
+    let mut workbook = calamine::open_workbook_auto_from_rs(cursor)
+        .map_err(|e| format!("invalid workbook: {e}"))?;
+    let Some(range) = workbook.worksheet_range_at(0) else {
+        return Ok(String::new());
+    };
+    let range = range.map_err(|e| format!("could not read the sheet: {e}"))?;
+
+    let mut out = String::new();
+    for row in range.rows() {
+        let fields: Vec<String> = row
+            .iter()
+            .map(|cell| match cell {
+                Data::Empty => String::new(),
+                Data::String(s) => s.clone(),
+                Data::Float(f) => format_number(*f),
+                Data::Int(i) => i.to_string(),
+                Data::Bool(b) => b.to_string(),
+                Data::DateTime(d) => d.to_string(),
+                other => other.to_string(),
+            })
+            .collect();
+        out.push_str(&csv_row(&fields));
+        out.push('\n');
+    }
+    Ok(out)
+}
+
+/// A float as a plain (non-scientific) string, with whole numbers as integers.
+fn format_number(value: f64) -> String {
+    if value.fract() == 0.0 && value.abs() < 1e15 {
+        format!("{}", value as i64)
+    } else {
+        value.to_string()
+    }
+}
+
+/// One CSV record with RFC 4180 quoting, as Go's `encoding/csv` writes it.
+fn csv_row(fields: &[String]) -> String {
+    fields
+        .iter()
+        .map(|field| {
+            if field.contains([',', '"', '\n', '\r']) {
+                format!("\"{}\"", field.replace('"', "\"\""))
+            } else {
+                field.clone()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(",")
 }
 
 async fn upload(req: Request, res: Response, multiple: bool) {

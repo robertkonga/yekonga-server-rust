@@ -160,16 +160,28 @@ async fn download_missing_file_is_404() {
 }
 
 #[tokio::test]
-async fn excel_to_csv_not_ported() {
+async fn excel_to_csv_converts_the_first_sheet() {
     setup();
     let app = app();
-    let (content_type, body) = multipart(&[("file", "data.xlsx", b"...")]);
+
+    // Build a small workbook: a header row, a numeric cell, and a value that
+    // needs CSV quoting.
+    let mut workbook = rust_xlsxwriter::Workbook::new();
+    let sheet = workbook.add_worksheet();
+    sheet.write_string(0, 0, "name").unwrap();
+    sheet.write_string(0, 1, "qty").unwrap();
+    sheet.write_string(1, 0, "Acme, Inc").unwrap();
+    sheet.write_number(1, 1, 42.0).unwrap();
+    let xlsx = workbook.save_to_buffer().unwrap();
+
+    let (content_type, body) = multipart(&[("file", "data.xlsx", &xlsx)]);
     let request = HttpRequest::post("/excel-to-csv")
         .header("content-type", content_type)
         .header("host", "shop.tz")
         .body(Body::from(body))
         .unwrap();
     let (status, json, _) = call(&app, request).await;
-    assert_eq!(status, 501);
-    assert!(json["error"].as_str().unwrap().contains("not supported"));
+    assert_eq!(status, 200, "{json}");
+    assert_eq!(json["status"], "success");
+    assert_eq!(json["csv"], "name,qty\n\"Acme, Inc\",42\n");
 }
