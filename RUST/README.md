@@ -8,8 +8,10 @@ and access tokens.
 The port is being done in steps. Step 1 (the foundation), step 2 (the query
 builder and all four database backends), step 3 (GraphQL, REST and the auth
 endpoints) and step 4 (cloud functions, triggers, the audit trail, cron jobs,
-the WebSocket server and socket change events) are done. Step 5 (gateways,
-mail, uploads, rate limiting, the error guard and TLS) is next.
+the WebSocket server and socket change events) are done. Step 5 is under way:
+rate limiting, the error guard, the IP whitelist, the notification queue,
+file uploads and downloads, and TLS are done; the SMS/WhatsApp/payment
+gateway providers and the Excel-to-CSV conversion remain.
 
 ## Status
 
@@ -34,13 +36,15 @@ mail, uploads, rate limiting, the error guard and TLS) is next.
 | GraphQL queries: single, list, paginate, summary (count/sum/max/min/average), relations in both directions | ✅ |
 | GraphQL mutations: create (with nested children), update, delete, import | ✅ |
 | REST API (`restApiEnabled`, `/api/:model…`) | ✅ |
-| GraphQL `groupBy`/`distinct`, summary `graph`, `download…`, `…Action`, custom fields | ⏳ return "not supported by the Rust port yet" |
+| GraphQL `distinct` (list queries) | ✅ dedupes by the given fields |
+| GraphQL model actions (`…Action`), via `set_graphql_action` | ✅ runs the registered handler |
+| GraphQL `groupBy`, summary `graph`, `download…`, custom fields | ⏳ return "not supported by the Rust port yet" |
 | Auth GraphQL schema (`graphql.apiAuthRoute`), on authorization servers | ✅ identical to Go's, with and without `secureAuthentication` (see below) |
 | Auth GraphQL: `otp`, `login` (password/OTP), `refreshToken`, `profile`, `register`, `tenantAvailability` | ✅ |
 | Auth endpoints `/me`, `/logout`, `/refresh` (with optional `/:moduleName`) | ✅ |
 | Access & refresh tokens (bcrypt passwords, hashed refresh tokens, auth cookies), user permissions | ✅ |
 | Auth GraphQL: `socialLogin`, `contactOTP`, `contactVerify`, `resetPassword`, `confirmToken`, `changePassword`, `switchAccount` | ⏳ return "not supported by the Rust port yet" |
-| OTP delivery (SMS / WhatsApp / mail gateways) | ⏳ codes are stored; a hook (`set_otp_sender`) delivers them until step 5 |
+| OTP delivery | ✅ codes queue as notifications (or go to a `set_otp_sender` hook); a registered send function delivers them |
 | Cloud functions (`define`/`run`) | ✅ |
 | Database triggers (before/after find/create/update/delete, per model or `*_all`) | ✅ |
 | Auth triggers (before/after login, OTP, register) | ✅ |
@@ -49,7 +53,14 @@ mail, uploads, rate limiting, the error guard and TLS) is next.
 | `FetchTenantByDomain` fallback on tenant-catch servers | ✅ |
 | WebSocket server (`/yekonga.io/`): namespaces, rooms, broadcast/to-room/to-client, `subscribe`/`unsubscribe`/`acknowledge`/`graphql-request` | ✅ |
 | Database change events pushed to a tenant's socket clients | ✅ |
-| SMS / WhatsApp / payment gateways, mail, uploads, rate limit, error guard, TLS | ⏳ step 5 |
+| Rate limiting (`security.rateLimit`, per-client token bucket) | ✅ |
+| Error guard (`security.errorGuard`, blocks error-flooding clients, persists to `IpAccessRule`) | ✅ |
+| IP whitelist (`IpAccessRule` `whitelist` rows exempt a client from both) | ✅ |
+| Notifications (`notify`): queues `Notification` records per channel; a cron job dispatches them | ✅ |
+| Send functions (`set_send_sms`/`set_send_email`/`set_send_whatsapp`); OTP codes queue as notifications | ✅ delivery providers (Beem/SMTP) not ported — register a sender |
+| File uploads (`/upload`, `/upload-files`) and downloads (`/download/:file.:ext`) | ✅ saved under `public/uploads`; image resize not ported |
+| TLS (`ports.secure`): HTTPS on `sslServer` with an HTTP→HTTPS redirect | ✅ certificate at `certificate/cert.pem` + `key.pem` |
+| SMS / WhatsApp / payment gateway providers, `/excel-to-csv` | ⏳ step 5 |
 | WebSocket JS SDK (`/yekonga.io/yekonga.io.js`) | ⏳ the embedded client script isn't ported |
 
 A tenant id set by a preload middleware (`req.set_tenant_id(...)`) is kept
@@ -125,10 +136,29 @@ everything that runs after it.
 
 - Relative `public` directories keep their first character. The Go code
   turns `"public"` into `"./ublic"`.
-- `ports.secure: true` fails at startup instead of serving TLS. Until TLS
-  is ported, terminate TLS at a reverse proxy.
-- `security.rateLimit` and `security.errorGuard` are not enforced yet. A
-  warning is logged at startup if they are enabled.
+- `ports.secure: true` serves HTTPS on `ports.sslServer` with the certificate
+  at `certificate/cert.pem` and key at `certificate/key.pem`, and runs an
+  HTTP→HTTPS redirect on `ports.server`. TLS uses rustls with the ring
+  provider (Go uses Go's crypto/tls); the certificate and key formats (PEM)
+  are the same.
+- Uploaded files are saved under `public/uploads` with a random name and the
+  original extension. Go resizes images to WebP on upload; the port stores
+  them unchanged. `/excel-to-csv` converts the uploaded workbook's first sheet
+  to CSV (via `calamine`).
+- GraphQL `distinct` is applied in the port after fetching (in memory), so it
+  works the same on every backend; Go pushes it into the database query.
+  `groupBy`, the summary `graph` and the `download…` queries still return "not
+  supported by the Rust port yet": grouped aggregation, time-bucketed graph
+  data and server-side file rendering (PDF/Excel) aren't ported. A model's
+  `…Action` mutation runs a handler registered with `set_graphql_action`
+  (like Go's `Action`); with none registered it errors.
+- `security.rateLimit`, `security.errorGuard` and the `IpAccessRule`
+  whitelist are enforced. The rate limiter is a per-client token bucket; the
+  error guard blocks a client that sends more than `requestsPerSecond` error
+  responses in one second (permanently, or for `blockHours`) and persists the
+  block to `IpAccessRule`; `whitelist` rows exempt a client from both. The
+  client is keyed by `X-Forwarded-For`/`X-Real-Ip` only when
+  `security.trustProxyHeaders` is set, otherwise by the connection's address.
 - `res.redirect(url)` uses 302 if no redirect status was set. Go's
   `http.Redirect` would send the current status, often 200.
 - If a handler panics, the client gets a 500 response. Go drops the
@@ -193,9 +223,14 @@ everything that runs after it.
 - OTP codes and refresh tokens use the operating system's random generator.
   Go builds them from `math/rand` seeded with the clock (`GetRandomString`),
   so its codes and tokens are predictable.
-- OTP codes are not delivered on their own: the SMS, WhatsApp and mail
-  gateways are step 5. A code is stored and, if a sender is registered with
-  `Yekonga::set_otp_sender`, handed to it; otherwise a warning is logged.
+- OTP codes and other notifications are delivered by registered send
+  functions, not built-in gateways. `notify` queues `Notification` records
+  and a cron job (`SystemNotification`, every 10s, when `hasCronjob` is set)
+  hands each to `set_send_sms`/`set_send_email`/`set_send_whatsapp`. An OTP
+  request queues a notification (or calls a `set_otp_sender` hook if one is
+  registered). The Beem SMS, WhatsApp and SMTP providers themselves aren't
+  ported, so without a registered sender a notification is logged and marked
+  submitted without being sent.
 - Auth mutations that only look a user up in Go (`socialLogin`,
   `contactOTP`, `contactVerify`, `resetPassword`, `confirmToken`,
   `changePassword`, `switchAccount`) return "not supported by the Rust port

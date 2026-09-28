@@ -176,6 +176,8 @@ struct Inner {
     cloud: RwLock<crate::cloud::CloudRegistry>,
     cron_jobs: RwLock<Vec<crate::cron::CronJob>>,
     sockets: crate::socket::SocketServer,
+    security: crate::security::Security,
+    send_functions: RwLock<crate::notify::SendFunctions>,
 }
 
 impl Yekonga {
@@ -226,6 +228,8 @@ impl Yekonga {
             cloud: RwLock::default(),
             cron_jobs: RwLock::default(),
             sockets: crate::socket::SocketServer::new(),
+            security: crate::security::Security::default(),
+            send_functions: RwLock::default(),
             backend,
             config,
         }));
@@ -293,6 +297,14 @@ impl Yekonga {
 
     pub(crate) fn cron_jobs(&self) -> &RwLock<Vec<crate::cron::CronJob>> {
         &self.0.cron_jobs
+    }
+
+    pub(crate) fn security_state(&self) -> &crate::security::Security {
+        &self.0.security
+    }
+
+    pub(crate) fn send_functions(&self) -> &RwLock<crate::notify::SendFunctions> {
+        &self.0.send_functions
     }
 
     /// The WebSocket server (change events and Socket.IO-style messaging).
@@ -742,8 +754,10 @@ impl Yekonga {
         });
 
         crate::auth::register_routes(self);
+        self.register_notification_job();
         crate::rest::register_graphql_route(self);
         crate::rest::register_rest_routes(self);
+        crate::upload::register_routes(self);
 
         for public in &self.0.config.public {
             match self.resolve_public_directory(public) {
@@ -819,21 +833,6 @@ impl Yekonga {
     /// serves until Ctrl-C.
     pub async fn start(&self, port: Option<u16>) -> Result<()> {
         let config = &self.0.config;
-        if config.ports.secure {
-            // TLS isn't ported yet; refusing is safer than silently serving plain HTTP.
-            return Err(Error::Bind(
-                format!("port {}", config.ports.ssl_server),
-                std::io::Error::other(
-                    "ports.secure (TLS) is not supported yet; terminate TLS at a reverse proxy",
-                ),
-            ));
-        }
-        if config.security.rate_limit.enabled || config.security.error_guard.enabled {
-            tracing::warn!(
-                "security.rateLimit and security.errorGuard are not ported yet and are ignored"
-            );
-        }
-
         if !config.database.disable_auto_indexes {
             // In the background: creating an existing index is a no-op, and
             // MongoDB builds new ones without blocking reads and writes.
@@ -851,6 +850,13 @@ impl Yekonga {
             crate::cron::start(self.clone());
         }
 
+        // With ports.secure, serve HTTPS on ssl_server (default port when
+        // none is given) and redirect plain HTTP on ports.server to it.
+        if config.ports.secure {
+            let port = port.unwrap_or(config.ports.ssl_server as u16);
+            return self.start_tls(port, config.ports.server as u16).await;
+        }
+
         let port = port.unwrap_or(config.ports.server as u16);
         let address = format!("0.0.0.0:{port}");
         let listener = tokio::net::TcpListener::bind(&address)
@@ -858,11 +864,7 @@ impl Yekonga {
             .map_err(|e| Error::Bind(address.clone(), e))?;
 
         tracing::info!("Server is running on {address}");
-        for ready in
-            std::mem::take(&mut *self.0.when_ready.lock().unwrap_or_else(|e| e.into_inner()))
-        {
-            tokio::task::spawn_blocking(ready);
-        }
+        self.run_when_ready();
 
         let service = self
             .router()
@@ -873,6 +875,79 @@ impl Yekonga {
             })
             .await
             .map_err(Error::Serve)
+    }
+
+    fn run_when_ready(&self) {
+        for ready in
+            std::mem::take(&mut *self.0.when_ready.lock().unwrap_or_else(|e| e.into_inner()))
+        {
+            tokio::task::spawn_blocking(ready);
+        }
+    }
+
+    /// Serves HTTPS on `port` with `certificate/cert.pem` and
+    /// `certificate/key.pem`, and a plain-HTTP redirect server on
+    /// `redirect_port` (port of the `ports.secure` branch of Go's `Start`).
+    async fn start_tls(&self, port: u16, redirect_port: u16) -> Result<()> {
+        // rustls needs a process-wide crypto provider; install one once.
+        let _ = rustls::crypto::ring::default_provider().install_default();
+
+        let cert = self.resolve_certificate("cert.pem");
+        let key = self.resolve_certificate("key.pem");
+        let tls = axum_server::tls_rustls::RustlsConfig::from_pem_file(&cert, &key)
+            .await
+            .map_err(|e| Error::Bind(format!("TLS certificate ({})", cert.display()), e))?;
+
+        // Redirect http://host/path to https on the redirect port.
+        let redirect = tokio::spawn(async move {
+            let app = axum::Router::new().fallback(|req: http::Request<Body>| async move {
+                let host = header_value(req.headers(), "host");
+                let path = req
+                    .uri()
+                    .path_and_query()
+                    .map(|p| p.as_str())
+                    .unwrap_or("/");
+                let target = format!("https://{host}{path}");
+                match HeaderValue::from_str(&target) {
+                    Ok(location) => {
+                        let mut response = http::Response::new(Body::empty());
+                        *response.status_mut() = StatusCode::MOVED_PERMANENTLY;
+                        response
+                            .headers_mut()
+                            .insert(http::header::LOCATION, location);
+                        response
+                    }
+                    Err(_) => text_response(StatusCode::BAD_REQUEST, "bad host"),
+                }
+            });
+            if let Ok(listener) = tokio::net::TcpListener::bind(("0.0.0.0", redirect_port)).await {
+                let _ = axum::serve(listener, app).await;
+            }
+        });
+
+        let address: SocketAddr = ([0, 0, 0, 0], port).into();
+        tracing::info!("Server is running on https://0.0.0.0:{port}");
+        self.run_when_ready();
+
+        let result = axum_server::bind_rustls(address, tls)
+            .serve(
+                self.router()
+                    .into_make_service_with_connect_info::<SocketAddr>(),
+            )
+            .await
+            .map_err(Error::Serve);
+        redirect.abort();
+        result
+    }
+
+    /// A path under the `certificate/` directory: relative to the working
+    /// directory, else to the executable's directory.
+    fn resolve_certificate(&self, name: &str) -> PathBuf {
+        let relative = PathBuf::from("certificate").join(name);
+        if relative.is_file() {
+            return relative;
+        }
+        self.0.root_path.join("certificate").join(name)
     }
 
     // ----- request pipeline ----------------------------------------------
@@ -887,6 +962,24 @@ impl Yekonga {
         let path = percent_encoding::percent_decode_str(parts.uri.path())
             .decode_utf8_lossy()
             .into_owned();
+
+        // Abuse guards run first, before static files or body parsing, so a
+        // blocked or throttled client is rejected as cheaply as possible.
+        let client_key = crate::security::client_key(
+            &parts.headers,
+            peer,
+            self.0.config.security.trust_proxy_headers,
+        );
+        if !self.allow_error_guard(&client_key).await {
+            return text_response(StatusCode::FORBIDDEN, "forbidden");
+        }
+        if !self.allow_rate_limit(&client_key).await {
+            let mut response = text_response(StatusCode::TOO_MANY_REQUESTS, "too many requests");
+            response
+                .headers_mut()
+                .insert("retry-after", HeaderValue::from_static("1"));
+            return response;
+        }
 
         // Static files are served before any request parsing or middleware.
         if self.is_static_path(&path) {
@@ -990,7 +1083,10 @@ impl Yekonga {
         }
 
         self.flush_audit_trail(&req);
-        res.finish().await
+        let response = res.finish().await;
+        self.record_error_response(&req, &client_key, response.status().as_u16())
+            .await;
+        response
     }
 
     async fn run_pipeline(
@@ -1068,6 +1164,13 @@ where
     F: Future<Output = ()> + Send + 'static,
 {
     Arc::new(move |req, res| Box::pin(handler(req, res)))
+}
+
+/// A plain-text response with a status (for the abuse guards).
+fn text_response(status: StatusCode, body: &'static str) -> http::Response<Body> {
+    let mut response = http::Response::new(Body::from(body));
+    *response.status_mut() = status;
+    response
 }
 
 fn cookie_is_set(headers: &http::HeaderMap, name: &str) -> bool {

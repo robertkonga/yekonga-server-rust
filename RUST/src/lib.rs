@@ -33,6 +33,7 @@ pub mod helper;
 mod lookup;
 pub mod middleware;
 pub mod model;
+pub mod notify;
 pub mod payload;
 mod query;
 mod request;
@@ -40,7 +41,9 @@ mod response;
 mod rest;
 pub mod router;
 pub mod schema;
+pub mod security;
 pub mod socket;
+mod upload;
 
 pub use app::{BoxFuture, StaticConfig, Yekonga, COOKIE_ENABLED_KEY, DEFAULT_EXTENSIONS};
 pub use config::YekongaConfig;

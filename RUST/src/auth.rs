@@ -198,19 +198,43 @@ impl Yekonga {
             .unwrap_or_else(|e| e.into_inner()) = Some(Arc::new(sender));
     }
 
-    fn send_otp(&self, message: OtpMessage) {
+    /// Delivers an OTP code: through a [`set_otp_sender`](Self::set_otp_sender)
+    /// hook if one is registered, otherwise by queuing a notification (Go's
+    /// `SetOTPVerification` always goes through `Notify`).
+    async fn send_otp(&self, message: OtpMessage) {
         let sender = self
             .otp_sender_slot()
             .read()
             .unwrap_or_else(|e| e.into_inner())
             .clone();
-        match sender {
-            Some(sender) => sender(message),
-            None => tracing::warn!(
-                username = %message.username,
-                "OTP code created but not sent: no OTP sender is set (Yekonga::set_otp_sender)"
-            ),
+        if let Some(sender) = sender {
+            sender(message);
+            return;
         }
+
+        let mut user = crate::notify::NotifiedUser {
+            user_id: message.user_id,
+            ..Default::default()
+        };
+        let mut params = crate::notify::NotificationParams {
+            title: "OTP".into(),
+            ..Default::default()
+        };
+        match message.channel.as_str() {
+            "whatsapp" => {
+                user.whatsapp = message.username;
+                params.whatsapp = message.text;
+            }
+            "email" => {
+                user.email = message.username;
+                params.html = message.text;
+            }
+            _ => {
+                user.phone = message.username;
+                params.text = message.text;
+            }
+        }
+        self.notify(&user, &params).await;
     }
 
     /// The access token lifetime, in minutes (default 15).
@@ -472,7 +496,8 @@ impl Yekonga {
                     "{code} is your verification code. For security, do not share this code."
                 ),
                 code,
-            });
+            })
+            .await;
         }
 
         record

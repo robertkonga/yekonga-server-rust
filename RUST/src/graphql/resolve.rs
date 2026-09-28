@@ -217,9 +217,6 @@ fn apply_args(mut query: ModelQuery, args: &Map<String, Value>) -> Result<ModelQ
     if !names(args.get("groupBy")).is_empty() {
         return Err(not_ported("groupBy"));
     }
-    if !names(args.get("distinct")).is_empty() {
-        return Err(not_ported("distinct"));
-    }
     if let Some(limit) = args.get("limit").and_then(Value::as_i64) {
         query = query.take(limit);
     }
@@ -288,7 +285,27 @@ pub(crate) async fn list<'a>(
 ) -> FieldResult<'a> {
     let (query, _) = field_query(ctx, app, model, keys.as_ref())?;
     let records = query.find().await.map_err(db_error)?;
+    let records = distinct(records, &names(args(ctx).get("distinct")));
     Ok(Some(FieldValue::list(records.into_iter().map(record))))
+}
+
+/// Keeps the first record for each distinct combination of `fields` (Go's
+/// `distinct` argument). No fields means every record is kept.
+pub(crate) fn distinct(records: Vec<DataMap>, fields: &[String]) -> Vec<DataMap> {
+    if fields.is_empty() {
+        return records;
+    }
+    let mut seen = std::collections::HashSet::new();
+    records
+        .into_iter()
+        .filter(|record| {
+            let key: Vec<String> = fields
+                .iter()
+                .map(|f| record.get(f).map(ToString::to_string).unwrap_or_default())
+                .collect();
+            seen.insert(key)
+        })
+        .collect()
 }
 
 pub(crate) async fn paginate<'a>(
@@ -506,6 +523,55 @@ pub(crate) async fn import<'a>(
     Ok(Some(FieldValue::owned_any(Node::Json(Value::Object(
         imported,
     )))))
+}
+
+/// Runs a model's `xAction` mutation through a registered action function
+/// (Go's `getMutationActionField`). Errors when no handler is registered for
+/// the model, action and access role/route.
+pub(crate) async fn action<'a>(
+    ctx: &ResolverContext<'a>,
+    app: &Yekonga,
+    model: &Arc<DataModel>,
+) -> FieldResult<'a> {
+    let args = args(ctx);
+    let request = execution(ctx).and_then(|e| e.request.as_ref());
+    let action_name = args
+        .get("action")
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .to_string();
+
+    let context = crate::cloud::ActionContext {
+        app: app.clone(),
+        request: request.cloned(),
+        model: model.name.clone(),
+        action: action_name.clone(),
+        input: input_data(&args),
+        filters: args.get("where").cloned().unwrap_or(Value::Null),
+        access_role: args
+            .get("accessRole")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_string(),
+        route: args
+            .get("route")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_string(),
+    };
+
+    match app.run_graphql_action(context).await {
+        Some(result) => Ok(Some(FieldValue::owned_any(Node::Json(json!({
+            "data": result.data,
+            "success": result.success,
+            "status": result.status,
+            "message": result.message,
+        }))))),
+        None => Err(Error::new(format!(
+            "no action \"{action_name}\" is registered for {}",
+            model.name
+        ))),
+    }
 }
 
 /// Whether a saved record came from `input` (Go's `importInputMatches`): by

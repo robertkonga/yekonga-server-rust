@@ -73,6 +73,32 @@ pub type TriggerFn = Arc<dyn Fn(TriggerContext) -> BoxFuture<TriggerReturn> + Se
 pub type CloudFn =
     Arc<dyn Fn(Value, CloudContext) -> BoxFuture<Result<Value, String>> + Send + Sync>;
 
+/// Passed to a GraphQL model action (`xAction`).
+#[derive(Clone)]
+pub struct ActionContext {
+    pub app: Yekonga,
+    pub request: Option<Request>,
+    pub model: String,
+    pub action: String,
+    /// The mutation's `input`/`inputData`/`inputRaw`.
+    pub input: Value,
+    /// The `where` argument.
+    pub filters: Value,
+    pub access_role: String,
+    pub route: String,
+}
+
+/// What a model action returns (Go's `GraphqlActionResult`).
+#[derive(Clone, Debug, Default)]
+pub struct ActionResult {
+    pub data: Value,
+    pub success: bool,
+    pub status: bool,
+    pub message: String,
+}
+
+pub type ActionFn = Arc<dyn Fn(ActionContext) -> BoxFuture<ActionResult> + Send + Sync>;
+
 /// The cloud function `set_fetch_tenant_by_domain` registers under.
 pub(crate) const FETCH_TENANT_BY_DOMAIN: &str = "__SET_FETCH_TENANT_BY_DOMAIN__";
 
@@ -84,6 +110,8 @@ pub(crate) struct CloudRegistry {
     triggers: HashMap<(String, TriggerAction, String), TriggerFn>,
     trigger_all: HashMap<TriggerAction, TriggerFn>,
     auth_triggers: HashMap<TriggerAction, TriggerFn>,
+    /// GraphQL model actions, keyed by model, action and access slug.
+    actions: HashMap<(String, String, String), ActionFn>,
 }
 
 /// The access slug Go builds from a role and route (`ToSlug(role_route)`).
@@ -271,6 +299,47 @@ impl Yekonga {
             access_role: String::new(),
             route: String::new(),
         };
+        Some(function(ctx).await)
+    }
+
+    // ----- GraphQL model actions ---------------------------------------------------------
+
+    /// Registers a handler for a model's `xAction` mutation (Go's `Action`).
+    /// `access_role` and `route` narrow it to a GraphQL role and route.
+    pub fn set_graphql_action(
+        &self,
+        model: &str,
+        action: &str,
+        access_role: &str,
+        route: &str,
+        function: impl Fn(ActionContext) -> BoxFuture<ActionResult> + Send + Sync + 'static,
+    ) {
+        let key = (
+            model.to_string(),
+            action.to_string(),
+            access_slug(access_role, route),
+        );
+        self.cloud_registry()
+            .write()
+            .unwrap_or_else(|e| e.into_inner())
+            .actions
+            .insert(key, Arc::new(function));
+    }
+
+    /// Runs a registered model action, or `None` when none matches (Go's
+    /// `actionCallback`).
+    pub(crate) async fn run_graphql_action(&self, ctx: ActionContext) -> Option<ActionResult> {
+        let function = self
+            .cloud_registry()
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .actions
+            .get(&(
+                ctx.model.clone(),
+                ctx.action.clone(),
+                access_slug(&ctx.access_role, &ctx.route),
+            ))
+            .cloned()?;
         Some(function(ctx).await)
     }
 
