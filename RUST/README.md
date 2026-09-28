@@ -6,8 +6,8 @@ behavior, including its route patterns, middleware order, error responses
 and access tokens.
 
 The port is being done in steps. Step 1 (the foundation), step 2 (the query
-builder and all four database backends) and most of step 3 (GraphQL and
-REST) are done.
+builder and all four database backends) and step 3 (GraphQL, REST and the
+auth endpoints) are done.
 
 ## Status
 
@@ -33,8 +33,12 @@ REST) are done.
 | GraphQL mutations: create (with nested children), update, delete, import | ✅ |
 | REST API (`restApiEnabled`, `/api/:model…`) | ✅ |
 | GraphQL `groupBy`/`distinct`, summary `graph`, `download…`, `…Action`, custom fields | ⏳ return "not supported by the Rust port yet" |
-| Auth GraphQL schema (`graphql.apiAuthRoute`) and auth endpoints | ⏳ step 3 |
-| Auth endpoints (`/me`, `/logout`, `/refresh`, login/OTP) | ⏳ step 3 |
+| Auth GraphQL schema (`graphql.apiAuthRoute`), on authorization servers | ✅ identical to Go's, with and without `secureAuthentication` (see below) |
+| Auth GraphQL: `otp`, `login` (password/OTP), `refreshToken`, `profile`, `register`, `tenantAvailability` | ✅ |
+| Auth endpoints `/me`, `/logout`, `/refresh` (with optional `/:moduleName`) | ✅ |
+| Access & refresh tokens (bcrypt passwords, hashed refresh tokens, auth cookies), user permissions | ✅ |
+| Auth GraphQL: `socialLogin`, `contactOTP`, `contactVerify`, `resetPassword`, `confirmToken`, `changePassword`, `switchAccount` | ⏳ return "not supported by the Rust port yet" |
+| OTP delivery (SMS / WhatsApp / mail gateways) | ⏳ codes are stored; a hook (`set_otp_sender`) delivers them until step 5 |
 | Cloud functions, DB triggers, cron jobs, WebSocket / Socket.IO | ⏳ step 4 |
 | SMS / WhatsApp / payment gateways, mail, uploads, rate limit, error guard, TLS | ⏳ step 5 |
 
@@ -155,6 +159,23 @@ everything that runs after it.
   yet (step 4).
 - The client IP falls back to the connection's address when there is no
   `X-Forwarded-For` or `X-Real-Ip` header.
+- **Login checks the password.** Go's `AttemptLogin` treats the literal
+  password `"true"` as a match for every account (`main_function.go`), so
+  anyone can sign in as anyone. The Rust port only accepts the account's
+  bcrypt password or the configured `globalPassword`. Go's `$2a$` hashes
+  verify unchanged.
+- OTP codes and refresh tokens use the operating system's random generator.
+  Go builds them from `math/rand` seeded with the clock (`GetRandomString`),
+  so its codes and tokens are predictable.
+- OTP codes are not delivered on their own: the SMS, WhatsApp and mail
+  gateways are step 5. A code is stored and, if a sender is registered with
+  `Yekonga::set_otp_sender`, handed to it; otherwise a warning is logged.
+- Auth mutations that only look a user up in Go (`socialLogin`,
+  `contactOTP`, `contactVerify`, `resetPassword`, `confirmToken`,
+  `changePassword`, `switchAccount`) return "not supported by the Rust port
+  yet" instead.
+- `getUserPermission` guards against a missing `Tenant` model. Go panics
+  when it isn't in the schema.
 
 ## GraphQL compatibility
 
@@ -163,6 +184,13 @@ the Go server. `tests/go_parity.rs` compares it against Go's introspection
 output (`tests/fixtures/go_graphql_schema.txt`: 533 types, 6,512 lines), and
 against a hash of the schema with every module enabled (1,294 types). Both
 match exactly.
+
+The auth schema (`graphql.apiAuthRoute`, on authorization servers) is
+compared the same way, both with and without `secureAuthentication`
+(`tests/fixtures/go_auth_schema*.txt`); `login` and `refreshToken` return a
+`CredentialToken` with it and a `Profile` without it, as in Go. The only
+difference is the GraphQL library's built-in `Float` scalar, which no auth
+field uses and Go leaves out.
 
 The resolvers were checked the same way, with both servers on one MongoDB
 database. 19 queries covered filters, sorting, paging, relations in both

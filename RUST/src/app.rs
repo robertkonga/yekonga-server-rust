@@ -171,6 +171,8 @@ struct Inner {
     backend: Arc<dyn Backend>,
     caches: LookupCaches,
     graphql_schema: OnceLock<std::result::Result<async_graphql::dynamic::Schema, String>>,
+    auth_schema: OnceLock<std::result::Result<async_graphql::dynamic::Schema, String>>,
+    otp_sender: RwLock<Option<crate::auth::OtpSender>>,
 }
 
 impl Yekonga {
@@ -216,6 +218,8 @@ impl Yekonga {
             token_paths: OnceLock::new(),
             caches: LookupCaches::new(&config),
             graphql_schema: OnceLock::new(),
+            auth_schema: OnceLock::new(),
+            otp_sender: RwLock::default(),
             backend,
             config,
         }));
@@ -265,6 +269,16 @@ impl Yekonga {
         &self,
     ) -> &OnceLock<std::result::Result<async_graphql::dynamic::Schema, String>> {
         &self.0.graphql_schema
+    }
+
+    pub(crate) fn auth_schema_cell(
+        &self,
+    ) -> &OnceLock<std::result::Result<async_graphql::dynamic::Schema, String>> {
+        &self.0.auth_schema
+    }
+
+    pub(crate) fn otp_sender_slot(&self) -> &RwLock<Option<crate::auth::OtpSender>> {
+        &self.0.otp_sender
     }
 
     pub(crate) fn caches(&self) -> &LookupCaches {
@@ -647,6 +661,7 @@ impl Yekonga {
             });
         });
 
+        crate::auth::register_routes(self);
         crate::rest::register_graphql_route(self);
         crate::rest::register_rest_routes(self);
 

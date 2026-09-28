@@ -252,7 +252,7 @@ fn shared_types() -> Vec<async_graphql::dynamic::Type> {
 }
 
 /// An object whose fields read keys of a JSON parent.
-fn json_object(name: &str, fields: &[(&str, TypeRef)]) -> Object {
+pub(crate) fn json_object(name: &str, fields: &[(&str, TypeRef)]) -> Object {
     fields
         .iter()
         .fold(Object::new(name), |object, (field, ty)| {
@@ -262,13 +262,7 @@ fn json_object(name: &str, fields: &[(&str, TypeRef)]) -> Object {
 
 fn json_field(name: &str, ty: TypeRef) -> Field {
     let key = name.to_string();
-    let kind = match ty.to_string().trim_end_matches('!') {
-        "Int" => Kind::Int,
-        "Float" => Kind::Float,
-        "Boolean" => Kind::Bool,
-        "String" => Kind::String,
-        _ => Kind::Raw,
-    };
+    let kind = Kind::for_scalar(ty.to_string().trim_end_matches('!'));
 
     Field::new(name, ty, move |ctx| {
         let value = match ctx.parent_value.downcast_ref::<Node>() {

@@ -16,6 +16,7 @@
 //! `download…` queries, `…Action` mutations and custom GraphQL fields, which
 //! return an error saying so.
 
+mod auth;
 mod resolve;
 mod schema;
 
@@ -26,13 +27,17 @@ use serde_json::{json, Map, Value};
 use crate::app::Yekonga;
 use crate::db::DataMap;
 use crate::request::Request;
+use crate::response::Response;
 
+pub use auth::build_auth_schema;
 pub use schema::build_schema;
 
-/// Per-execution data: the HTTP request the query runs for, if any.
+/// Per-execution data: the HTTP exchange the query runs for, if any.
 #[derive(Clone, Default)]
 pub(crate) struct ExecutionData {
     pub request: Option<Request>,
+    /// For resolvers that set cookies (the auth API).
+    pub response: Option<Response>,
 }
 
 /// A value passed from a resolver to the fields below it.
@@ -80,35 +85,50 @@ impl Yekonga {
         operation_name: &str,
         request: Option<&Request>,
     ) -> Value {
-        let schema = match self.graphql_schema() {
-            Ok(schema) => schema,
-            Err(err) => return json!({"data": null, "errors": [{"message": err}]}),
+        let data = ExecutionData {
+            request: request.cloned(),
+            response: None,
         };
+        execute(
+            self.graphql_schema(),
+            query,
+            variables,
+            operation_name,
+            data,
+        )
+        .await
+    }
 
-        let mut gql = GqlRequest::new(query)
-            .variables(Variables::from_json(variables))
-            .data(ExecutionData {
-                request: request.cloned(),
-            });
-        if !operation_name.is_empty() {
-            gql = gql.operation_name(operation_name);
-        }
+    /// Runs a query against the auth schema (`graphql.apiAuthRoute`: login,
+    /// OTP, tokens). Login and token refreshes set cookies on `response`.
+    pub async fn auth_graphql(
+        &self,
+        query: &str,
+        variables: Value,
+        operation_name: &str,
+        request: Option<&Request>,
+        response: Option<&Response>,
+    ) -> Value {
+        let data = ExecutionData {
+            request: request.cloned(),
+            response: response.cloned(),
+        };
+        execute(
+            self.auth_graphql_schema(),
+            query,
+            variables,
+            operation_name,
+            data,
+        )
+        .await
+    }
 
-        let response = schema.execute(gql).await;
-        let data = response.data.into_json().unwrap_or(Value::Null);
-        let mut result = Map::new();
-        result.insert("data".into(), data);
-
-        if !response.errors.is_empty() {
-            let errors: Vec<Value> = response
-                .errors
-                .iter()
-                .map(|e| json!({"message": format_error(&e.message), "locations": null}))
-                .collect();
-            result.insert("errors".into(), Value::Array(errors));
-        }
-
-        Value::Object(result)
+    /// The auth schema, built on first use.
+    pub fn auth_graphql_schema(&self) -> Result<&Schema, String> {
+        self.auth_schema_cell()
+            .get_or_init(|| build_auth_schema(self).map_err(|e| e.to_string()))
+            .as_ref()
+            .map_err(Clone::clone)
     }
 
     /// The schema, built on first use (after the app has registered its
@@ -119,6 +139,42 @@ impl Yekonga {
             .as_ref()
             .map_err(Clone::clone)
     }
+}
+
+async fn execute(
+    schema: Result<&Schema, String>,
+    query: &str,
+    variables: Value,
+    operation_name: &str,
+    data: ExecutionData,
+) -> Value {
+    let schema = match schema {
+        Ok(schema) => schema,
+        Err(err) => return json!({"data": null, "errors": [{"message": err}]}),
+    };
+
+    let mut gql = GqlRequest::new(query)
+        .variables(Variables::from_json(variables))
+        .data(data);
+    if !operation_name.is_empty() {
+        gql = gql.operation_name(operation_name);
+    }
+
+    let response = schema.execute(gql).await;
+    let data = response.data.into_json().unwrap_or(Value::Null);
+    let mut result = Map::new();
+    result.insert("data".into(), data);
+
+    if !response.errors.is_empty() {
+        let errors: Vec<Value> = response
+            .errors
+            .iter()
+            .map(|e| json!({"message": format_error(&e.message), "locations": null}))
+            .collect();
+        result.insert("errors".into(), Value::Array(errors));
+    }
+
+    Value::Object(result)
 }
 
 /// Go's `formatErrors`: input validation errors get a generic message. A
