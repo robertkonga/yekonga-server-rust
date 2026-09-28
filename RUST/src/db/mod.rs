@@ -7,6 +7,8 @@
 
 pub mod filter;
 mod local;
+#[cfg(feature = "mongodb")]
+pub mod mongo;
 pub mod values;
 
 use std::future::Future;
@@ -17,6 +19,8 @@ use serde_json::{Map, Value};
 
 pub use filter::{Cond, Filter, Operand};
 pub use local::LocalBackend;
+#[cfg(feature = "mongodb")]
+pub use mongo::MongoBackend;
 
 use crate::model::DataModel;
 
@@ -124,6 +128,12 @@ pub trait Backend: Send + Sync + 'static {
 
     /// Deletes the matching records, returning how many.
     fn delete<'a>(&'a self, query: &'a Query) -> DbFuture<'a, u64>;
+
+    /// Creates the indexes the models need, returning how many exist
+    /// afterwards. Backends without indexes do nothing.
+    fn ensure_indexes<'a>(&'a self, _models: Vec<&'a DataModel>) -> DbFuture<'a, usize> {
+        Box::pin(async { Ok(0) })
+    }
 }
 
 /// Stands in for a backend that isn't ported yet: every call fails.

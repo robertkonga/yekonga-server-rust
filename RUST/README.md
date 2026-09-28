@@ -6,7 +6,7 @@ behavior, including its route patterns, middleware order, error responses
 and access tokens.
 
 The port is being done in steps. Steps 1 (the foundation) and 2 (the query
-builder and local database) are done.
+builder, local database and MongoDB) are done.
 
 ## Status
 
@@ -25,7 +25,8 @@ builder and local database) are done.
 | Local database (`database.kind: "local"`) | ✅ JSON files, for development and tests |
 | Tenant lookup by domain (with TenantConfig), TenantCatch, user lookup on authorization servers, lookup caches | ✅ |
 | Tenant scoping of queries made with a request | ✅ |
-| MongoDB / MySQL / SQL backends | ⏳ next; queries fail with "not supported yet" until then |
+| MongoDB (`database.kind: "mongodb"`), including startup indexes | ✅ shares a database with the Go server (see below) |
+| MySQL / SQL backends | ⏳ next; queries fail with "not supported yet" until then |
 | REST API (`restAPI`) and auto-generated GraphQL | ⏳ step 3 |
 | Auth endpoints (`/me`, `/logout`, `/refresh`, login/OTP) | ⏳ step 3 |
 | Cloud functions, DB triggers, cron jobs, WebSocket / Socket.IO | ⏳ step 4 |
@@ -128,10 +129,25 @@ everything that runs after it.
 - The client IP falls back to the connection's address when there is no
   `X-Forwarded-For` or `X-Real-Ip` header.
 
+## Sharing a MongoDB database with the Go server
+
+The MongoDB backend stores records in the same shape as the Go server:
+- the same collection names
+- ObjectIds for `_id`, `tenantId` and ID fields
+- BSON dates for Date fields
+- numbers for Number and Float fields
+
+This was checked against MongoDB 7. The Go server wrote 4 orders and the
+Rust port wrote 4 more into the same collection. Both then ran the same 13
+queries (plain values, `in`/`notIn`/`all`, `exists`, `OR`, number and date
+comparisons, a relation filter) and the aggregates over all 8 records, and
+the results were identical.
+
 ## Development
 
 ```bash
 cargo test                      # unit, HTTP pipeline and Go-parity tests
+YEKONGA_TEST_MONGO_PORT=27017 cargo test   # also run the query tests on MongoDB (drops yekonga_rust_test_* databases)
 cargo clippy --all-targets
 cargo fmt --check
 ```
