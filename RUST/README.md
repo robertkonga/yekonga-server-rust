@@ -9,8 +9,8 @@ The port is being done in steps. Step 1 (the foundation), step 2 (the query
 builder and all four database backends), step 3 (GraphQL, REST and the auth
 endpoints) and step 4 (cloud functions, triggers, the audit trail, cron jobs,
 the WebSocket server and socket change events) are done. Step 5 is under way:
-rate limiting, the error guard and the IP whitelist are done; the gateways,
-mail, uploads and TLS are next.
+rate limiting, the error guard, the IP whitelist and the notification queue
+are done; the gateway providers, uploads and TLS are next.
 
 ## Status
 
@@ -41,7 +41,7 @@ mail, uploads and TLS are next.
 | Auth endpoints `/me`, `/logout`, `/refresh` (with optional `/:moduleName`) | ✅ |
 | Access & refresh tokens (bcrypt passwords, hashed refresh tokens, auth cookies), user permissions | ✅ |
 | Auth GraphQL: `socialLogin`, `contactOTP`, `contactVerify`, `resetPassword`, `confirmToken`, `changePassword`, `switchAccount` | ⏳ return "not supported by the Rust port yet" |
-| OTP delivery (SMS / WhatsApp / mail gateways) | ⏳ codes are stored; a hook (`set_otp_sender`) delivers them until step 5 |
+| OTP delivery | ✅ codes queue as notifications (or go to a `set_otp_sender` hook); a registered send function delivers them |
 | Cloud functions (`define`/`run`) | ✅ |
 | Database triggers (before/after find/create/update/delete, per model or `*_all`) | ✅ |
 | Auth triggers (before/after login, OTP, register) | ✅ |
@@ -53,7 +53,9 @@ mail, uploads and TLS are next.
 | Rate limiting (`security.rateLimit`, per-client token bucket) | ✅ |
 | Error guard (`security.errorGuard`, blocks error-flooding clients, persists to `IpAccessRule`) | ✅ |
 | IP whitelist (`IpAccessRule` `whitelist` rows exempt a client from both) | ✅ |
-| SMS / WhatsApp / payment gateways, mail, uploads/downloads, TLS | ⏳ step 5 |
+| Notifications (`notify`): queues `Notification` records per channel; a cron job dispatches them | ✅ |
+| Send functions (`set_send_sms`/`set_send_email`/`set_send_whatsapp`); OTP codes queue as notifications | ✅ delivery providers (Beem/SMTP) not ported — register a sender |
+| SMS / WhatsApp / payment gateway providers, uploads/downloads, TLS | ⏳ step 5 |
 | WebSocket JS SDK (`/yekonga.io/yekonga.io.js`) | ⏳ the embedded client script isn't ported |
 
 A tenant id set by a preload middleware (`req.set_tenant_id(...)`) is kept
@@ -202,9 +204,14 @@ everything that runs after it.
 - OTP codes and refresh tokens use the operating system's random generator.
   Go builds them from `math/rand` seeded with the clock (`GetRandomString`),
   so its codes and tokens are predictable.
-- OTP codes are not delivered on their own: the SMS, WhatsApp and mail
-  gateways are step 5. A code is stored and, if a sender is registered with
-  `Yekonga::set_otp_sender`, handed to it; otherwise a warning is logged.
+- OTP codes and other notifications are delivered by registered send
+  functions, not built-in gateways. `notify` queues `Notification` records
+  and a cron job (`SystemNotification`, every 10s, when `hasCronjob` is set)
+  hands each to `set_send_sms`/`set_send_email`/`set_send_whatsapp`. An OTP
+  request queues a notification (or calls a `set_otp_sender` hook if one is
+  registered). The Beem SMS, WhatsApp and SMTP providers themselves aren't
+  ported, so without a registered sender a notification is logged and marked
+  submitted without being sent.
 - Auth mutations that only look a user up in Go (`socialLogin`,
   `contactOTP`, `contactVerify`, `resetPassword`, `confirmToken`,
   `changePassword`, `switchAccount`) return "not supported by the Rust port

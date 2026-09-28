@@ -33,6 +33,7 @@ pub mod helper;
 mod lookup;
 pub mod middleware;
 pub mod model;
+pub mod notify;
 pub mod payload;
 mod query;
 mod request;

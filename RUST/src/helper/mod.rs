@@ -5,8 +5,10 @@ mod contact;
 pub mod jwt;
 pub mod lenient;
 mod naming;
+mod template;
 mod web;
 
 pub use contact::*;
 pub use naming::*;
+pub use template::*;
 pub use web::*;

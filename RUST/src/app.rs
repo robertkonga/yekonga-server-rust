@@ -177,6 +177,7 @@ struct Inner {
     cron_jobs: RwLock<Vec<crate::cron::CronJob>>,
     sockets: crate::socket::SocketServer,
     security: crate::security::Security,
+    send_functions: RwLock<crate::notify::SendFunctions>,
 }
 
 impl Yekonga {
@@ -228,6 +229,7 @@ impl Yekonga {
             cron_jobs: RwLock::default(),
             sockets: crate::socket::SocketServer::new(),
             security: crate::security::Security::default(),
+            send_functions: RwLock::default(),
             backend,
             config,
         }));
@@ -299,6 +301,10 @@ impl Yekonga {
 
     pub(crate) fn security_state(&self) -> &crate::security::Security {
         &self.0.security
+    }
+
+    pub(crate) fn send_functions(&self) -> &RwLock<crate::notify::SendFunctions> {
+        &self.0.send_functions
     }
 
     /// The WebSocket server (change events and Socket.IO-style messaging).
@@ -748,6 +754,7 @@ impl Yekonga {
         });
 
         crate::auth::register_routes(self);
+        self.register_notification_job();
         crate::rest::register_graphql_route(self);
         crate::rest::register_rest_routes(self);
 
