@@ -8,8 +8,9 @@ and access tokens.
 The port is being done in steps. Step 1 (the foundation), step 2 (the query
 builder and all four database backends), step 3 (GraphQL, REST and the auth
 endpoints) and step 4 (cloud functions, triggers, the audit trail, cron jobs,
-the WebSocket server and socket change events) are done. Step 5 (gateways,
-mail, uploads, rate limiting, the error guard and TLS) is next.
+the WebSocket server and socket change events) are done. Step 5 is under way:
+rate limiting, the error guard and the IP whitelist are done; the gateways,
+mail, uploads and TLS are next.
 
 ## Status
 
@@ -49,7 +50,10 @@ mail, uploads, rate limiting, the error guard and TLS) is next.
 | `FetchTenantByDomain` fallback on tenant-catch servers | ✅ |
 | WebSocket server (`/yekonga.io/`): namespaces, rooms, broadcast/to-room/to-client, `subscribe`/`unsubscribe`/`acknowledge`/`graphql-request` | ✅ |
 | Database change events pushed to a tenant's socket clients | ✅ |
-| SMS / WhatsApp / payment gateways, mail, uploads, rate limit, error guard, TLS | ⏳ step 5 |
+| Rate limiting (`security.rateLimit`, per-client token bucket) | ✅ |
+| Error guard (`security.errorGuard`, blocks error-flooding clients, persists to `IpAccessRule`) | ✅ |
+| IP whitelist (`IpAccessRule` `whitelist` rows exempt a client from both) | ✅ |
+| SMS / WhatsApp / payment gateways, mail, uploads/downloads, TLS | ⏳ step 5 |
 | WebSocket JS SDK (`/yekonga.io/yekonga.io.js`) | ⏳ the embedded client script isn't ported |
 
 A tenant id set by a preload middleware (`req.set_tenant_id(...)`) is kept
@@ -127,8 +131,13 @@ everything that runs after it.
   turns `"public"` into `"./ublic"`.
 - `ports.secure: true` fails at startup instead of serving TLS. Until TLS
   is ported, terminate TLS at a reverse proxy.
-- `security.rateLimit` and `security.errorGuard` are not enforced yet. A
-  warning is logged at startup if they are enabled.
+- `security.rateLimit`, `security.errorGuard` and the `IpAccessRule`
+  whitelist are enforced. The rate limiter is a per-client token bucket; the
+  error guard blocks a client that sends more than `requestsPerSecond` error
+  responses in one second (permanently, or for `blockHours`) and persists the
+  block to `IpAccessRule`; `whitelist` rows exempt a client from both. The
+  client is keyed by `X-Forwarded-For`/`X-Real-Ip` only when
+  `security.trustProxyHeaders` is set, otherwise by the connection's address.
 - `res.redirect(url)` uses 302 if no redirect status was set. Go's
   `http.Redirect` would send the current status, often 200.
 - If a handler panics, the client gets a 500 response. Go drops the

@@ -40,6 +40,7 @@ mod response;
 mod rest;
 pub mod router;
 pub mod schema;
+pub mod security;
 pub mod socket;
 
 pub use app::{BoxFuture, StaticConfig, Yekonga, COOKIE_ENABLED_KEY, DEFAULT_EXTENSIONS};

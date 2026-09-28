@@ -176,6 +176,7 @@ struct Inner {
     cloud: RwLock<crate::cloud::CloudRegistry>,
     cron_jobs: RwLock<Vec<crate::cron::CronJob>>,
     sockets: crate::socket::SocketServer,
+    security: crate::security::Security,
 }
 
 impl Yekonga {
@@ -226,6 +227,7 @@ impl Yekonga {
             cloud: RwLock::default(),
             cron_jobs: RwLock::default(),
             sockets: crate::socket::SocketServer::new(),
+            security: crate::security::Security::default(),
             backend,
             config,
         }));
@@ -293,6 +295,10 @@ impl Yekonga {
 
     pub(crate) fn cron_jobs(&self) -> &RwLock<Vec<crate::cron::CronJob>> {
         &self.0.cron_jobs
+    }
+
+    pub(crate) fn security_state(&self) -> &crate::security::Security {
+        &self.0.security
     }
 
     /// The WebSocket server (change events and Socket.IO-style messaging).
@@ -828,12 +834,6 @@ impl Yekonga {
                 ),
             ));
         }
-        if config.security.rate_limit.enabled || config.security.error_guard.enabled {
-            tracing::warn!(
-                "security.rateLimit and security.errorGuard are not ported yet and are ignored"
-            );
-        }
-
         if !config.database.disable_auto_indexes {
             // In the background: creating an existing index is a no-op, and
             // MongoDB builds new ones without blocking reads and writes.
@@ -887,6 +887,24 @@ impl Yekonga {
         let path = percent_encoding::percent_decode_str(parts.uri.path())
             .decode_utf8_lossy()
             .into_owned();
+
+        // Abuse guards run first, before static files or body parsing, so a
+        // blocked or throttled client is rejected as cheaply as possible.
+        let client_key = crate::security::client_key(
+            &parts.headers,
+            peer,
+            self.0.config.security.trust_proxy_headers,
+        );
+        if !self.allow_error_guard(&client_key).await {
+            return text_response(StatusCode::FORBIDDEN, "forbidden");
+        }
+        if !self.allow_rate_limit(&client_key).await {
+            let mut response = text_response(StatusCode::TOO_MANY_REQUESTS, "too many requests");
+            response
+                .headers_mut()
+                .insert("retry-after", HeaderValue::from_static("1"));
+            return response;
+        }
 
         // Static files are served before any request parsing or middleware.
         if self.is_static_path(&path) {
@@ -990,7 +1008,10 @@ impl Yekonga {
         }
 
         self.flush_audit_trail(&req);
-        res.finish().await
+        let response = res.finish().await;
+        self.record_error_response(&req, &client_key, response.status().as_u16())
+            .await;
+        response
     }
 
     async fn run_pipeline(
@@ -1068,6 +1089,13 @@ where
     F: Future<Output = ()> + Send + 'static,
 {
     Arc::new(move |req, res| Box::pin(handler(req, res)))
+}
+
+/// A plain-text response with a status (for the abuse guards).
+fn text_response(status: StatusCode, body: &'static str) -> http::Response<Body> {
+    let mut response = http::Response::new(Body::from(body));
+    *response.status_mut() = status;
+    response
 }
 
 fn cookie_is_set(headers: &http::HeaderMap, name: &str) -> bool {
