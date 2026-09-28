@@ -36,7 +36,9 @@ gateway providers and the Excel-to-CSV conversion remain.
 | GraphQL queries: single, list, paginate, summary (count/sum/max/min/average), relations in both directions | ✅ |
 | GraphQL mutations: create (with nested children), update, delete, import | ✅ |
 | REST API (`restApiEnabled`, `/api/:model…`) | ✅ |
-| GraphQL `groupBy`/`distinct`, summary `graph`, `download…`, `…Action`, custom fields | ⏳ return "not supported by the Rust port yet" |
+| GraphQL `distinct` (list queries) | ✅ dedupes by the given fields |
+| GraphQL model actions (`…Action`), via `set_graphql_action` | ✅ runs the registered handler |
+| GraphQL `groupBy`, summary `graph`, `download…`, custom fields | ⏳ return "not supported by the Rust port yet" |
 | Auth GraphQL schema (`graphql.apiAuthRoute`), on authorization servers | ✅ identical to Go's, with and without `secureAuthentication` (see below) |
 | Auth GraphQL: `otp`, `login` (password/OTP), `refreshToken`, `profile`, `register`, `tenantAvailability` | ✅ |
 | Auth endpoints `/me`, `/logout`, `/refresh` (with optional `/:moduleName`) | ✅ |
@@ -141,8 +143,15 @@ everything that runs after it.
   are the same.
 - Uploaded files are saved under `public/uploads` with a random name and the
   original extension. Go resizes images to WebP on upload; the port stores
-  them unchanged. `/excel-to-csv` returns "not supported by the Rust port yet"
-  (the Excel parser isn't ported).
+  them unchanged. `/excel-to-csv` converts the uploaded workbook's first sheet
+  to CSV (via `calamine`).
+- GraphQL `distinct` is applied in the port after fetching (in memory), so it
+  works the same on every backend; Go pushes it into the database query.
+  `groupBy`, the summary `graph` and the `download…` queries still return "not
+  supported by the Rust port yet": grouped aggregation, time-bucketed graph
+  data and server-side file rendering (PDF/Excel) aren't ported. A model's
+  `…Action` mutation runs a handler registered with `set_graphql_action`
+  (like Go's `Action`); with none registered it errors.
 - `security.rateLimit`, `security.errorGuard` and the `IpAccessRule`
   whitelist are enforced. The rate limiter is a per-client token bucket; the
   error guard blocks a client that sends more than `requestsPerSecond` error

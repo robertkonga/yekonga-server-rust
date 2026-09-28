@@ -168,6 +168,79 @@ async fn errors_and_unported_arguments() {
 }
 
 #[tokio::test]
+async fn distinct_dedupes_by_field() {
+    let app = app_with(json!({}));
+    for title in ["A", "A", "B"] {
+        gql(
+            &app,
+            r#"mutation($t: String){ createOrder(input: {title: $t}) { success } }"#,
+            json!({ "t": title }),
+        )
+        .await;
+    }
+
+    let all = gql(
+        &app,
+        "{ orders(orderBy: {title: ASC}) { title } }",
+        json!({}),
+    )
+    .await;
+    assert_eq!(all["data"]["orders"].as_array().unwrap().len(), 3);
+
+    let distinct = gql(
+        &app,
+        "{ orders(distinct: [title], orderBy: {title: ASC}) { title } }",
+        json!({}),
+    )
+    .await;
+    assert_eq!(
+        distinct["data"]["orders"],
+        json!([{"title": "A"}, {"title": "B"}])
+    );
+}
+
+#[tokio::test]
+async fn model_action_runs_a_registered_handler() {
+    use yekonga::cloud::ActionResult;
+
+    let app = app_with(json!({}));
+    app.set_graphql_action("Order", "archive", "", "", |ctx| {
+        Box::pin(async move {
+            let title = ctx.input.get("title").cloned().unwrap_or_default();
+            ActionResult {
+                data: serde_json::json!({"archived": title}),
+                success: true,
+                status: true,
+                message: "Archived".into(),
+            }
+        })
+    });
+
+    let ok = gql(
+        &app,
+        r#"mutation { orderAction(action: "archive", inputData: {title: "A"}) { success message data } }"#,
+        json!({}),
+    )
+    .await;
+    assert_eq!(
+        ok["data"]["orderAction"],
+        json!({"success": true, "message": "Archived", "data": {"archived": "A"}})
+    );
+
+    // An unregistered action is an error naming the action and model.
+    let missing = gql(
+        &app,
+        r#"mutation { orderAction(action: "nope") { success } }"#,
+        json!({}),
+    )
+    .await;
+    assert!(missing["errors"][0]["message"]
+        .as_str()
+        .unwrap()
+        .contains("no action \"nope\" is registered for Order"));
+}
+
+#[tokio::test]
 async fn introspection_needs_the_playground() {
     let app = app_with(json!({}));
     let blocked = gql(&app, "{ __schema { queryType { name } } }", json!({})).await;

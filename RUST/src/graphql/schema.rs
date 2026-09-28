@@ -158,7 +158,11 @@ pub fn build_schema(app: &Yekonga) -> Result<Schema, SchemaError> {
                 &to_variable(&format!("delete_{k}")),
                 model,
             ))
-            .field(action_field(&to_variable(&format!("{k}_action")), model));
+            .field(action_field(
+                app,
+                &to_variable(&format!("{k}_action")),
+                model,
+            ));
     }
 
     let mut schema = Schema::build("Query", Some("Mutation"), None)
@@ -854,13 +858,17 @@ fn import_field(app: &Yekonga, name: &str, model: &Arc<DataModel>) -> Field {
     )
 }
 
-fn action_field(name: &str, model: &Arc<DataModel>) -> Field {
+fn action_field(app: &Yekonga, name: &str, model: &Arc<DataModel>) -> Field {
+    let (app, target) = (app.clone(), model.clone());
     role_args(
-        Field::new(name, TypeRef::named(result_name("action", model)), |_| {
-            FieldFuture::new(async {
-                Err::<Option<FieldValue>, _>(resolve::not_ported("model actions"))
-            })
-        })
+        Field::new(
+            name,
+            TypeRef::named(result_name("action", model)),
+            move |ctx| {
+                let (app, target) = (app.clone(), target.clone());
+                FieldFuture::new(async move { resolve::action(&ctx, &app, &target).await })
+            },
+        )
         .argument(InputValue::new("where", TypeRef::named(where_name(model))))
         .argument(InputValue::new("input", TypeRef::named(input_name(model))))
         .argument(InputValue::new("inputData", TypeRef::named("Any")))
