@@ -23,6 +23,7 @@ use super::schema::json_object;
 use super::{ExecutionData, Node};
 use crate::app::{Yekonga, COOKIE_ENABLED_KEY};
 use crate::auth::{bool_of, string_of, LoginAttempt, LoginData, OtpCheck};
+use crate::cloud::{TriggerAction, TriggerReturn};
 use crate::db::values::is_empty;
 use crate::helper::{format_phone, is_phone};
 use crate::payload::TokenPayload;
@@ -54,6 +55,32 @@ impl Call {
         self.request
             .as_ref()
             .ok_or_else(|| Error::new("this operation needs an HTTP request"))
+    }
+
+    /// Runs a `before` auth trigger: returns an error when it rejects, or the
+    /// replacement value it gave (Go's before-trigger handling).
+    async fn before_auth(
+        &self,
+        action: TriggerAction,
+        data: Value,
+        rejection: &str,
+    ) -> Result<Option<Value>, Error> {
+        match self
+            .app
+            .run_auth_trigger(action, self.request.as_ref(), data)
+            .await
+        {
+            Some(TriggerReturn::Reject) => Err(Error::new(rejection.to_string())),
+            Some(TriggerReturn::Replace(value)) => Ok(Some(value)),
+            _ => Ok(None),
+        }
+    }
+
+    /// Runs an `after` auth trigger (its result is not used).
+    async fn after_auth(&self, action: TriggerAction, data: Value) {
+        self.app
+            .run_auth_trigger(action, self.request.as_ref(), data)
+            .await;
     }
 }
 
@@ -565,14 +592,23 @@ async fn otp(call: Call) -> Result<Value, Error> {
         } else if !public_can_register {
             return Err(Error::new("User does not exist at all"));
         }
-    } else if !username.is_empty() {
-        user = app
-            .set_otp_verification(&json!(username), &username_type, true, "login", req)
-            .await;
-        user_id = user
-            .as_ref()
-            .map(|u| string_of(u.get("userId")))
-            .unwrap_or_default();
+    } else {
+        call.before_auth(
+            TriggerAction::BeforeOtp,
+            Value::Object(input.clone()),
+            "Rejected by BeforeOtpTriggerAction",
+        )
+        .await?;
+
+        if !username.is_empty() {
+            user = app
+                .set_otp_verification(&json!(username), &username_type, true, "login", req)
+                .await;
+            user_id = user
+                .as_ref()
+                .map(|u| string_of(u.get("userId")))
+                .unwrap_or_default();
+        }
     }
 
     app.record_login_attempt(
@@ -586,10 +622,13 @@ async fn otp(call: Call) -> Result<Value, Error> {
     )
     .await;
 
-    Ok(match user {
+    let result = match user {
         Some(_) => json!({"status": true, "message": "Success", "data": null}),
         None => json!({"status": false, "message": "You have no access", "data": null}),
-    })
+    };
+    call.after_auth(TriggerAction::AfterOtp, result.clone())
+        .await;
+    Ok(result)
 }
 
 /// Go's enum values for `LoginTypeEnum` and `OrganizationTypeEnum` are the
@@ -634,6 +673,17 @@ async fn login(call: Call) -> Result<Value, Error> {
         login_type: attempt.login_type.clone(),
         ..Default::default()
     };
+
+    let user_data = otp
+        .go_result()
+        .map(|u| Value::Object(u.clone()))
+        .unwrap_or(Value::Null);
+    call.before_auth(
+        TriggerAction::BeforeLogin,
+        user_data,
+        "Rejected by before BeforeLoginTriggerAction",
+    )
+    .await?;
 
     if otp.go_result().is_some() {
         match app.attempt_login(req, &attempt, &otp).await {
@@ -683,6 +733,8 @@ async fn login(call: Call) -> Result<Value, Error> {
                     app.set_auth_cookies(req, res, &access_token, &refresh_token);
                 }
 
+                call.after_auth(TriggerAction::AfterLogin, Value::Object(user.clone()))
+                    .await;
                 return Ok(Value::Object(user));
             }
             Err(message) => {
@@ -724,10 +776,32 @@ async fn register(call: Call) -> Result<Value, Error> {
         input.insert("language".into(), json!("en"));
     }
 
-    let tenant = tenants
+    if let Some(Value::Object(replaced)) = call
+        .before_auth(
+            TriggerAction::BeforeRegister,
+            Value::Object(input.clone()),
+            "Rejected by before BeforeRegisterTriggerAction",
+        )
+        .await?
+    {
+        input = replaced;
+    }
+
+    let mut tenant = tenants
         .create(Value::Object(input.clone()))
         .await
         .map_err(|e| Error::new(e.to_string()))?;
+
+    if let Some(TriggerReturn::Replace(Value::Object(replaced))) = app
+        .run_auth_trigger(
+            TriggerAction::AfterRegister,
+            Some(req),
+            Value::Object(tenant.clone()),
+        )
+        .await
+    {
+        tenant = replaced;
+    }
 
     if let Ok(users) = app.query("User") {
         let names = json!({"firstName": input.get("firstName"), "lastName": input.get("lastName")});

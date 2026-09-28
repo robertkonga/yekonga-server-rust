@@ -173,6 +173,9 @@ struct Inner {
     graphql_schema: OnceLock<std::result::Result<async_graphql::dynamic::Schema, String>>,
     auth_schema: OnceLock<std::result::Result<async_graphql::dynamic::Schema, String>>,
     otp_sender: RwLock<Option<crate::auth::OtpSender>>,
+    cloud: RwLock<crate::cloud::CloudRegistry>,
+    cron_jobs: RwLock<Vec<crate::cron::CronJob>>,
+    sockets: crate::socket::SocketServer,
 }
 
 impl Yekonga {
@@ -220,6 +223,9 @@ impl Yekonga {
             graphql_schema: OnceLock::new(),
             auth_schema: OnceLock::new(),
             otp_sender: RwLock::default(),
+            cloud: RwLock::default(),
+            cron_jobs: RwLock::default(),
+            sockets: crate::socket::SocketServer::new(),
             backend,
             config,
         }));
@@ -279,6 +285,80 @@ impl Yekonga {
 
     pub(crate) fn otp_sender_slot(&self) -> &RwLock<Option<crate::auth::OtpSender>> {
         &self.0.otp_sender
+    }
+
+    pub(crate) fn cloud_registry(&self) -> &RwLock<crate::cloud::CloudRegistry> {
+        &self.0.cloud
+    }
+
+    pub(crate) fn cron_jobs(&self) -> &RwLock<Vec<crate::cron::CronJob>> {
+        &self.0.cron_jobs
+    }
+
+    /// The WebSocket server (change events and Socket.IO-style messaging).
+    pub fn sockets(&self) -> &crate::socket::SocketServer {
+        &self.0.sockets
+    }
+
+    /// Records a change on the request's audit trail, if it is enabled and
+    /// the model isn't excluded (Go's `recordAuditChange` gate).
+    pub(crate) fn record_audit_change(
+        &self,
+        request: Option<&Request>,
+        change: crate::audit::AuditChange,
+    ) {
+        let config = &self.0.config;
+        if !config.audit_trail.enabled || change.model == "AuditTrail" {
+            return;
+        }
+        if config.audit_trail.exclude_models.contains(&change.model) {
+            return;
+        }
+        if let Some(request) = request {
+            request.add_audit_change(change);
+        }
+    }
+
+    /// Persists a request's buffered audit changes as one batch, off the
+    /// request path (Go's `flushAuditTrail`).
+    pub(crate) fn flush_audit_trail(&self, request: &Request) {
+        if !self.0.config.audit_trail.enabled {
+            return;
+        }
+        let changes = request.take_audit_changes();
+        if changes.is_empty() {
+            return;
+        }
+
+        let app = self.clone();
+        let auth = request.auth();
+        let client = request.client();
+        tokio::spawn(async move {
+            let Ok(query) = app.query("AuditTrail") else {
+                return;
+            };
+            for change in changes {
+                let mut data = serde_json::json!({
+                    "action": change.action,
+                    "collection": change.collection,
+                    "model": change.model,
+                    "documentId": change.document_id,
+                    "oldValues": change.old_values,
+                    "newValues": change.new_values,
+                });
+                if let Some(auth) = &auth {
+                    data["tenantId"] = serde_json::json!(auth.tenant_id);
+                    data["profileId"] = serde_json::json!(auth.profile_id);
+                    data["userId"] = serde_json::json!(auth.user_id);
+                }
+                if let Some(client) = &client {
+                    data["ipAddress"] = serde_json::json!(client.ip_address);
+                    data["userAgent"] = serde_json::json!(client.user_agent);
+                    data["browser"] = serde_json::json!(client.user_agent);
+                }
+                let _ = query.clone().skip_before_commit().create(data).await;
+            }
+        });
     }
 
     pub(crate) fn caches(&self) -> &LookupCaches {
@@ -753,6 +833,10 @@ impl Yekonga {
             });
         }
 
+        if config.has_cronjob {
+            crate::cron::start(self.clone());
+        }
+
         let port = port.unwrap_or(config.ports.server as u16);
         let address = format!("0.0.0.0:{port}");
         let listener = tokio::net::TcpListener::bind(&address)
@@ -891,6 +975,7 @@ impl Yekonga {
             }
         }
 
+        self.flush_audit_trail(&req);
         res.finish().await
     }
 

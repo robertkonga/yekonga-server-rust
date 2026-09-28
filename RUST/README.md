@@ -7,7 +7,9 @@ and access tokens.
 
 The port is being done in steps. Step 1 (the foundation), step 2 (the query
 builder and all four database backends) and step 3 (GraphQL, REST and the
-auth endpoints) are done.
+auth endpoints) are done. Step 4 is under way: cloud functions, database and
+auth triggers, the audit trail, cron jobs and the tenant-fetch fallback are
+done; the WebSocket server and socket change events are next.
 
 ## Status
 
@@ -39,7 +41,13 @@ auth endpoints) are done.
 | Access & refresh tokens (bcrypt passwords, hashed refresh tokens, auth cookies), user permissions | ✅ |
 | Auth GraphQL: `socialLogin`, `contactOTP`, `contactVerify`, `resetPassword`, `confirmToken`, `changePassword`, `switchAccount` | ⏳ return "not supported by the Rust port yet" |
 | OTP delivery (SMS / WhatsApp / mail gateways) | ⏳ codes are stored; a hook (`set_otp_sender`) delivers them until step 5 |
-| Cloud functions, DB triggers, cron jobs, WebSocket / Socket.IO | ⏳ step 4 |
+| Cloud functions (`define`/`run`) | ✅ |
+| Database triggers (before/after find/create/update/delete, per model or `*_all`) | ✅ |
+| Auth triggers (before/after login, OTP, register) | ✅ |
+| Audit trail (`auditTrail.enabled`, buffered per request, flushed to `AuditTrail`) | ✅ |
+| Cron jobs (`register_cronjob`, `register_cronjob_at`) | ✅ run when `hasCronjob` and the server is started |
+| `FetchTenantByDomain` fallback on tenant-catch servers | ✅ |
+| WebSocket / Socket.IO server and database change events | ⏳ step 4b |
 | SMS / WhatsApp / payment gateways, mail, uploads, rate limit, error guard, TLS | ⏳ step 5 |
 
 A tenant id set by a preload middleware (`req.set_tenant_id(...)`) is kept
@@ -155,8 +163,22 @@ everything that runs after it.
   Go says `In field "title": Expected "String!", found null.`
 - Relation fields are resolved one query at a time. Go batches them on
   MongoDB; the results are the same.
-- Database triggers, the audit trail and socket change events are not run
-  yet (step 4).
+- Socket change events are emitted but reach no clients yet: the WebSocket
+  server is step 4b.
+- Database triggers run around every read and write, before and after, unless
+  the query is marked `skip_before_commit`. Go runs `after` triggers even on
+  `skipBeforeCommit` queries (including its own internal writes); the port
+  skips both `before` and `after` triggers there, so internal framework
+  writes never fire triggers.
+- `before`/`after` create triggers run once per record. Go's `Import` runs
+  them once on the whole list, while its `Create` runs them per record; the
+  port is consistent and always per record.
+- The audit trail records the same fields Go does (action, model, document
+  id, old and new values, tenant/profile/user and client details) and is
+  flushed to the `AuditTrail` collection in the background once the request
+  ends. The document id comes from the record's `_id`/`id`. Go reads it from
+  the model's primary field, which for most models is a display field, not
+  the id.
 - The client IP falls back to the connection's address when there is no
   `X-Forwarded-For` or `X-Real-Ip` header.
 - **Login checks the password.** Go's `AttemptLogin` treats the literal

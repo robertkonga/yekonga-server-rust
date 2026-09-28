@@ -32,6 +32,7 @@ use regex::Regex;
 use serde_json::{json, Value};
 
 use crate::app::Yekonga;
+use crate::cloud::TriggerAction;
 use crate::db::values::{
     format_datetime, fuzzy_regex, get_timestamp, is_empty, is_numeric, new_object_id, now_string,
     object_id_from_str, to_float, to_int, ZERO_OBJECT_ID,
@@ -119,8 +120,7 @@ impl ModelQuery {
         self
     }
 
-    /// Doesn't run database triggers (kept for API parity; triggers aren't
-    /// ported yet).
+    /// Doesn't run database triggers (before or after) for this query.
     pub fn skip_before_commit(mut self) -> Self {
         self.skip_before_commit = true;
         self
@@ -185,15 +185,37 @@ impl ModelQuery {
     // ----- reads -----------------------------------------------------------
 
     pub async fn find(&self) -> Result<Vec<DataMap>, DbError> {
+        if self
+            .before(
+                TriggerAction::BeforeFind,
+                Value::Object(self.where_.clone()),
+            )
+            .await
+            .is_none()
+        {
+            return Ok(Vec::new());
+        }
         let query = self.build(self.limit_value()).await?;
         let records = self.app.backend().find(&query).await?;
+        let records = self.after_find(records).await;
         Ok(records.into_iter().map(|r| self.decorate(r)).collect())
     }
 
     pub async fn find_one(&self) -> Result<Option<DataMap>, DbError> {
+        if self
+            .before(
+                TriggerAction::BeforeFind,
+                Value::Object(self.where_.clone()),
+            )
+            .await
+            .is_none()
+        {
+            return Ok(None);
+        }
         let mut query = self.build(Some(1)).await?;
         query.skip = 0;
         let mut records = self.app.backend().find(&query).await?;
+        let mut records = self.after_find(records.drain(..).take(1).collect()).await;
         Ok(records.pop().map(|r| self.decorate(r)))
     }
 
@@ -296,22 +318,44 @@ impl ModelQuery {
 
     pub async fn create_many(&self, data: Vec<Value>) -> Result<Vec<DataMap>, DbError> {
         let tenant_id = self.tenant_id_for_writes();
-        let records = data
-            .into_iter()
-            .map(|value| {
-                let mut input = value.as_object().cloned().unwrap_or_default();
-                if let Some(tenant_id) = &tenant_id {
-                    input.insert(TENANT_ID_KEY.into(), Value::String(tenant_id.clone()));
-                }
-                self.format_create(&input)
-            })
-            .collect();
+
+        let mut records = Vec::with_capacity(data.len());
+        for value in data {
+            let mut input = value.as_object().cloned().unwrap_or_default();
+            if let Some(tenant_id) = &tenant_id {
+                input.insert(TENANT_ID_KEY.into(), Value::String(tenant_id.clone()));
+            }
+            // A `before` trigger may change the input or drop the record.
+            match self
+                .before(TriggerAction::BeforeCreate, Value::Object(input))
+                .await
+            {
+                Some(Value::Object(input)) => records.push(self.format_create(&input)),
+                Some(_) => {}
+                None => {}
+            }
+        }
+        if records.is_empty() {
+            return Ok(Vec::new());
+        }
 
         let query = Query::new(self.model.clone(), Filter::All);
         let stored = self.app.backend().insert(&query, records).await?;
         self.app.invalidate_caches(&self.model.name);
 
-        Ok(stored.into_iter().map(|r| self.decorate(r)).collect())
+        let mut results = Vec::with_capacity(stored.len());
+        for record in stored {
+            let record = self
+                .after(TriggerAction::AfterCreate, Value::Object(record))
+                .await;
+            if let Value::Object(record) = record {
+                self.record_audit("create", &record, None, Some(&record));
+                results.push(self.decorate(record));
+            }
+        }
+        self.emit_change("create");
+
+        Ok(results)
     }
 
     /// Creates or updates many records (Go's `Import`). A record is updated
@@ -428,23 +472,200 @@ impl ModelQuery {
     }
 
     async fn update_records(&self, data: Value, many: bool) -> Result<Vec<DataMap>, DbError> {
-        let input = data.as_object().cloned().unwrap_or_default();
+        let input = match self.before(TriggerAction::BeforeUpdate, data).await {
+            Some(input) => input.as_object().cloned().unwrap_or_default(),
+            None => return Ok(Vec::new()),
+        };
         let fields = self.format_update(&input);
         let query = self.build(None).await?;
+
+        // For the audit trail, read the records as they are before the write.
+        let old_values = if self.audit_enabled() {
+            let mut before = self.app.backend().find(&query).await?;
+            if !many {
+                before.truncate(1);
+            }
+            before
+                .into_iter()
+                .map(|r| (self.document_id(&r), r))
+                .collect()
+        } else {
+            std::collections::HashMap::new()
+        };
 
         let updated = self.app.backend().update(&query, fields, many).await?;
         self.app.invalidate_caches(&self.model.name);
 
-        Ok(updated.into_iter().map(|r| self.decorate(r)).collect())
+        let mut results = Vec::with_capacity(updated.len());
+        for record in updated {
+            let record = self
+                .after(TriggerAction::AfterUpdate, Value::Object(record))
+                .await;
+            if let Value::Object(record) = record {
+                let old = old_values.get(&self.document_id(&record));
+                self.record_audit("update", &record, old, Some(&record));
+                results.push(self.decorate(record));
+            }
+        }
+        self.emit_change("update");
+
+        Ok(results)
     }
 
     /// Deletes every matching record and returns how many. A query without
     /// any condition is refused.
     pub async fn delete(&self) -> Result<u64, DbError> {
-        let query = self.build(None).await?;
-        let deleted = self.app.backend().delete(&query).await?;
-        self.app.invalidate_caches(&self.model.name);
+        let where_ = match self
+            .before(
+                TriggerAction::BeforeDelete,
+                Value::Object(self.where_.clone()),
+            )
+            .await
+        {
+            Some(Value::Object(where_)) => where_,
+            Some(_) => self.where_.clone(),
+            None => return Ok(0),
+        };
+        let scoped = self.clone().with_where(where_);
+        let query = scoped.build(None).await?;
+
+        let old_values = if scoped.audit_enabled() {
+            scoped.app.backend().find(&query).await?
+        } else {
+            Vec::new()
+        };
+
+        let deleted = scoped.app.backend().delete(&query).await?;
+        scoped.app.invalidate_caches(&scoped.model.name);
+
+        scoped
+            .after(TriggerAction::AfterDelete, json!({"deleted": deleted}))
+            .await;
+        for old in &old_values {
+            scoped.record_audit("delete", old, Some(old), None);
+        }
+        scoped.emit_change("delete");
+
         Ok(deleted)
+    }
+
+    // ----- triggers, audit and change events ---------------------------------
+
+    /// A copy of this query with different conditions.
+    fn with_where(mut self, where_: DataMap) -> Self {
+        self.where_ = where_;
+        self
+    }
+
+    /// Runs a `before` trigger unless triggers are skipped. Returns `None`
+    /// when the trigger rejects the operation, otherwise the (possibly
+    /// replaced) data.
+    async fn before(&self, action: TriggerAction, data: Value) -> Option<Value> {
+        if self.skip_before_commit {
+            return Some(data);
+        }
+        self.app
+            .run_trigger(
+                &self.model.name,
+                action,
+                self.request.as_ref(),
+                data,
+                "",
+                "",
+            )
+            .await
+    }
+
+    /// Runs an `after` trigger unless triggers are skipped, returning the
+    /// (possibly replaced) data.
+    async fn after(&self, action: TriggerAction, data: Value) -> Value {
+        if self.skip_before_commit {
+            return data;
+        }
+        self.app
+            .run_trigger(
+                &self.model.name,
+                action,
+                self.request.as_ref(),
+                data.clone(),
+                "",
+                "",
+            )
+            .await
+            .unwrap_or(data)
+    }
+
+    /// Runs the after-find triggers on a result set.
+    async fn after_find(&self, records: Vec<DataMap>) -> Vec<DataMap> {
+        if self.skip_before_commit {
+            return records;
+        }
+        let data = Value::Array(records.iter().cloned().map(Value::Object).collect());
+        match self.after(TriggerAction::AfterFind, data).await {
+            Value::Array(items) => items
+                .into_iter()
+                .filter_map(|v| v.as_object().cloned())
+                .collect(),
+            _ => records,
+        }
+    }
+
+    /// Whether writes on this query should be recorded on the audit trail.
+    fn audit_enabled(&self) -> bool {
+        let config = self.app.config();
+        self.request.is_some()
+            && config.audit_trail.enabled
+            && self.model.name != "AuditTrail"
+            && !config.audit_trail.exclude_models.contains(&self.model.name)
+    }
+
+    /// The record's id, for the audit trail.
+    fn document_id(&self, record: &DataMap) -> String {
+        for key in ["_id", "id"] {
+            if let Some(value) = record.get(key).filter(|v| !is_empty(v)) {
+                return match value {
+                    Value::String(s) => s.clone(),
+                    other => other.to_string(),
+                };
+            }
+        }
+        String::new()
+    }
+
+    /// Buffers a data change on the audit trail.
+    fn record_audit(
+        &self,
+        action: &str,
+        doc: &DataMap,
+        old: Option<&DataMap>,
+        new: Option<&DataMap>,
+    ) {
+        if !self.audit_enabled() {
+            return;
+        }
+        self.app.record_audit_change(
+            self.request.as_ref(),
+            crate::audit::AuditChange {
+                action: action.to_string(),
+                collection: self.model.collection.clone(),
+                model: self.model.name.clone(),
+                document_id: self.document_id(doc),
+                old_values: old.cloned().unwrap_or_default(),
+                new_values: new.cloned().unwrap_or_default(),
+            },
+        );
+    }
+
+    /// Tells socket clients this model's data changed.
+    fn emit_change(&self, action: &str) {
+        let tenant_id = if self.model.has_tenant {
+            self.tenant_id_for_writes().unwrap_or_default()
+        } else {
+            String::new()
+        };
+        self.app
+            .sockets()
+            .emit_database_event(&self.model.name, action, &tenant_id);
     }
 
     // ----- building ----------------------------------------------------------

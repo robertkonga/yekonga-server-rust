@@ -21,8 +21,11 @@
 //! ```
 
 mod app;
+pub mod audit;
 pub mod auth;
+pub mod cloud;
 pub mod config;
+pub mod cron;
 pub mod db;
 mod error;
 pub mod graphql;
@@ -37,6 +40,7 @@ mod response;
 mod rest;
 pub mod router;
 pub mod schema;
+pub mod socket;
 
 pub use app::{BoxFuture, StaticConfig, Yekonga, COOKIE_ENABLED_KEY, DEFAULT_EXTENSIONS};
 pub use config::YekongaConfig;
