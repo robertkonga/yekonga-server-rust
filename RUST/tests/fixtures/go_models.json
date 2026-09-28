@@ -1,0 +1,6924 @@
+{
+ "AccountCredit": {
+  "children": {},
+  "class": "AccountCredits",
+  "collection": "account_credits",
+  "dateFields": [
+   "createdAt"
+  ],
+  "fields": {
+   "amount": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "paymentId": {
+    "default": null,
+    "fk": {
+     "foreign": "paymentId",
+     "model": "Payment",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "payment": "Payment|_id|paymentId",
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "accountCredits",
+  "required": [],
+  "single": "accountCredit",
+  "validFields": [
+   "amount",
+   "createdAt",
+   "id",
+   "paymentId",
+   "tenantId"
+  ],
+  "variable": "accountCredits"
+ },
+ "AuditTrail": {
+  "children": {},
+  "class": "AuditTrails",
+  "collection": "audit_trails",
+  "dateFields": [
+   "createdAt"
+  ],
+  "fields": {
+   "action": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "browser": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "collection": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "documentId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "ipAddress": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "model": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "newValues": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "oldValues": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "profileId": {
+    "default": null,
+    "fk": {
+     "foreign": "profileId",
+     "model": "Profile",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userAgent": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "profile": "Profile|_id|profileId",
+   "tenant": "Tenant|_id|tenantId",
+   "user": "User|_id|userId"
+  },
+  "plural": "auditTrails",
+  "required": [],
+  "single": "auditTrail",
+  "validFields": [
+   "action",
+   "browser",
+   "collection",
+   "createdAt",
+   "documentId",
+   "id",
+   "ipAddress",
+   "model",
+   "newValues",
+   "oldValues",
+   "profileId",
+   "tenantId",
+   "userAgent",
+   "userId"
+  ],
+  "variable": "auditTrails"
+ },
+ "AuthGroup": {
+  "children": {
+   "authGroupPermissions": "AuthGroupPermission|_id|authGroupId",
+   "authUserPermissions": "AuthUserPermission|_id|authGroupId"
+  },
+  "class": "AuthGroups",
+  "collection": "auth_groups",
+  "dateFields": [],
+  "fields": {
+   "description": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "moduleName": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "name": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "profileId": {
+    "default": null,
+    "fk": {
+     "foreign": "profileId",
+     "model": "Profile",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "profile": "Profile|_id|profileId",
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "authGroups",
+  "required": [],
+  "single": "authGroup",
+  "validFields": [
+   "description",
+   "id",
+   "moduleName",
+   "name",
+   "profileId",
+   "tenantId"
+  ],
+  "variable": "authGroups"
+ },
+ "AuthGroupPermission": {
+  "children": {},
+  "class": "AuthGroupPermissions",
+  "collection": "auth_group_permissions",
+  "dateFields": [],
+  "fields": {
+   "authGroupId": {
+    "default": null,
+    "fk": {
+     "foreign": "authGroupId",
+     "model": "AuthGroup",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "authPermissionId": {
+    "default": null,
+    "fk": {
+     "foreign": "authPermissionId",
+     "model": "AuthPermission",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "authGroup": "AuthGroup|_id|authGroupId",
+   "authPermission": "AuthPermission|_id|authPermissionId",
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "authGroupPermissions",
+  "required": [],
+  "single": "authGroupPermission",
+  "validFields": [
+   "authGroupId",
+   "authPermissionId",
+   "id",
+   "tenantId"
+  ],
+  "variable": "authGroupPermissions"
+ },
+ "AuthPermission": {
+  "children": {
+   "authGroupPermissions": "AuthGroupPermission|_id|authPermissionId",
+   "codeAuthUserPermissions": "AuthUserPermission|code|code"
+  },
+  "class": "AuthPermissions",
+  "collection": "auth_permissions",
+  "dateFields": [],
+  "fields": {
+   "code": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "description": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "group": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isVisible": {
+    "default": true,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "moduleName": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "name": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": false,
+  "parents": {},
+  "plural": "authPermissions",
+  "required": [],
+  "single": "authPermission",
+  "validFields": [
+   "code",
+   "description",
+   "group",
+   "id",
+   "isVisible",
+   "moduleName",
+   "name"
+  ],
+  "variable": "authPermissions"
+ },
+ "AuthUserPermission": {
+  "children": {},
+  "class": "AuthUserPermissions",
+  "collection": "auth_user_permissions",
+  "dateFields": [],
+  "fields": {
+   "authGroupId": {
+    "default": null,
+    "fk": {
+     "foreign": "authGroupId",
+     "model": "AuthGroup",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "code": {
+    "default": null,
+    "fk": {
+     "foreign": "code",
+     "model": "AuthPermission",
+     "primary": "code"
+    },
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "moduleName": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "profileId": {
+    "default": null,
+    "fk": {
+     "foreign": "profileId",
+     "model": "Profile",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "authGroup": "AuthGroup|_id|authGroupId",
+   "codeInfo": "AuthPermission|code|code",
+   "profile": "Profile|_id|profileId",
+   "tenant": "Tenant|_id|tenantId",
+   "user": "User|_id|userId"
+  },
+  "plural": "authUserPermissions",
+  "required": [],
+  "single": "authUserPermission",
+  "validFields": [
+   "authGroupId",
+   "code",
+   "id",
+   "moduleName",
+   "profileId",
+   "tenantId",
+   "userId"
+  ],
+  "variable": "authUserPermissions"
+ },
+ "Category": {
+  "children": {
+   "parentCategories": "Category|_id|parentId"
+  },
+  "class": "Categories",
+  "collection": "categories",
+  "dateFields": [],
+  "fields": {
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "name": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "parentId": {
+    "default": null,
+    "fk": {
+     "foreign": "parentId",
+     "model": "Category",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": false,
+  "parents": {
+   "parent": "Category|_id|parentId"
+  },
+  "plural": "categories",
+  "required": [],
+  "single": "category",
+  "validFields": [
+   "id",
+   "name",
+   "parentId"
+  ],
+  "variable": "categories"
+ },
+ "ChatGroup": {
+  "children": {
+   "chatMessages": "ChatMessage|_id|chatGroupId"
+  },
+  "class": "ChatGroups",
+  "collection": "chat_groups",
+  "dateFields": [
+   "timestamp"
+  ],
+  "fields": {
+   "description": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "members": {
+    "default": [],
+    "fk": {
+     "foreign": "members",
+     "model": "ChatGroupMember",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "parentReference": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "profileId": {
+    "default": null,
+    "fk": {
+     "foreign": "profileId",
+     "model": "Profile",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "reference": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "timestamp": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "title": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "type": {
+    "default": "public",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 3,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "membersInfo": "ChatGroupMember|_id|members",
+   "profile": "Profile|_id|profileId",
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "chatGroups",
+  "required": [],
+  "single": "chatGroup",
+  "validFields": [
+   "description",
+   "id",
+   "members",
+   "parentReference",
+   "profileId",
+   "reference",
+   "tenantId",
+   "timestamp",
+   "title",
+   "type"
+  ],
+  "variable": "chatGroups"
+ },
+ "ChatGroupMember": {
+  "children": {
+   "chatMessageStates": "ChatMessageState|_id|chatGroupMemberId",
+   "chatMessages": "ChatMessage|_id|chatGroupMemberId",
+   "membersChatGroups": "ChatGroup|_id|members"
+  },
+  "class": "ChatGroupMembers",
+  "collection": "chat_group_members",
+  "dateFields": [
+   "timestamp"
+  ],
+  "fields": {
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isAdmin": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isOwner": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "name": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "profileUrl": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "reference": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "timestamp": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userReferenceId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "chatGroupMembers",
+  "required": [],
+  "single": "chatGroupMember",
+  "validFields": [
+   "id",
+   "isAdmin",
+   "isOwner",
+   "name",
+   "profileUrl",
+   "reference",
+   "tenantId",
+   "timestamp",
+   "userId",
+   "userReferenceId"
+  ],
+  "variable": "chatGroupMembers"
+ },
+ "ChatMessage": {
+  "children": {
+   "chatMessageStates": "ChatMessageState|_id|chatMessageId"
+  },
+  "class": "ChatMessages",
+  "collection": "chat_messages",
+  "dateFields": [
+   "timestamp"
+  ],
+  "fields": {
+   "chatGroupId": {
+    "default": null,
+    "fk": {
+     "foreign": "chatGroupId",
+     "model": "ChatGroup",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "chatGroupMemberId": {
+    "default": null,
+    "fk": {
+     "foreign": "chatGroupMemberId",
+     "model": "ChatGroupMember",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "content": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "media": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "mediaReference": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "timestamp": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "type": {
+    "default": "active",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 6,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "chatGroup": "ChatGroup|_id|chatGroupId",
+   "chatGroupMember": "ChatGroupMember|_id|chatGroupMemberId",
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "chatMessages",
+  "required": [],
+  "single": "chatMessage",
+  "validFields": [
+   "chatGroupId",
+   "chatGroupMemberId",
+   "content",
+   "id",
+   "media",
+   "mediaReference",
+   "tenantId",
+   "timestamp",
+   "type"
+  ],
+  "variable": "chatMessages"
+ },
+ "ChatMessageState": {
+  "children": {},
+  "class": "ChatMessageStates",
+  "collection": "chat_message_states",
+  "dateFields": [
+   "openedDate",
+   "receivedDate",
+   "sentDate",
+   "timestamp"
+  ],
+  "fields": {
+   "chatGroupMemberId": {
+    "default": null,
+    "fk": {
+     "foreign": "chatGroupMemberId",
+     "model": "ChatGroupMember",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "chatMessageId": {
+    "default": null,
+    "fk": {
+     "foreign": "chatMessageId",
+     "model": "ChatMessage",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "opened": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "openedDate": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "received": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "receivedDate": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "sent": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "sentDate": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "timestamp": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "chatGroupMember": "ChatGroupMember|_id|chatGroupMemberId",
+   "chatMessage": "ChatMessage|_id|chatMessageId",
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "chatMessageStates",
+  "required": [],
+  "single": "chatMessageState",
+  "validFields": [
+   "chatGroupMemberId",
+   "chatMessageId",
+   "id",
+   "opened",
+   "openedDate",
+   "received",
+   "receivedDate",
+   "sent",
+   "sentDate",
+   "tenantId",
+   "timestamp"
+  ],
+  "variable": "chatMessageStates"
+ },
+ "CustomForm": {
+  "children": {
+   "customFormOptions": "CustomFormOption|_id|customFormId",
+   "customFormValues": "CustomFormValue|_id|customFormId",
+   "enabledCustomForms": "EnabledCustomForm|_id|customFormId",
+   "parentCustomFormCustomForms": "CustomForm|_id|parentCustomFormId"
+  },
+  "class": "CustomForms",
+  "collection": "custom_forms",
+  "dateFields": [
+   "createdAt",
+   "updatedAt"
+  ],
+  "fields": {
+   "advancedOptions": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "conditions": {
+    "default": [],
+    "fk": {},
+    "isArray": true,
+    "kind": "array",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "correctAnswerId": {
+    "default": false,
+    "fk": {
+     "foreign": "correctAnswerId",
+     "model": "SurveyQuestionOption",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "customClass": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "descriptionMessage": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "entity": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 3,
+    "protected": false,
+    "required": false
+   },
+   "errorMessage": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "hasCondition": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "hasImageUrl": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "hasProfanityFilter": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "hideResult": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "icon": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "imageUrl": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "file",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "input": {
+    "default": "text",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 20,
+    "protected": false,
+    "required": false
+   },
+   "isLive": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isMandatory": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isMultiple": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isPublicHidden": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isRandomized": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "label": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "maximum": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "number",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "maximumLabel": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "minimum": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "number",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "minimumLabel": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "mode": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "name": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "options": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "parentCustomFormId": {
+    "default": null,
+    "fk": {
+     "foreign": "parentCustomFormId",
+     "model": "CustomForm",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "placeholder": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "position": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "number",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "reportType": {
+    "default": "pie",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 4,
+    "protected": false,
+    "required": false
+   },
+   "resultsAsPieChart": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "showRespondentNames": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": "active",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "timer": {
+    "default": -1,
+    "fk": {},
+    "isArray": false,
+    "kind": "number",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "type": {
+    "default": "text",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 3,
+    "protected": false,
+    "required": false
+   },
+   "uniqueKey": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "updatedAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "widthClass": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "correctAnswer": "SurveyQuestionOption|_id|correctAnswerId",
+   "parentCustomForm": "CustomForm|_id|parentCustomFormId"
+  },
+  "plural": "customForms",
+  "required": [],
+  "single": "customForm",
+  "validFields": [
+   "advancedOptions",
+   "conditions",
+   "correctAnswerId",
+   "createdAt",
+   "customClass",
+   "descriptionMessage",
+   "entity",
+   "errorMessage",
+   "hasCondition",
+   "hasImageUrl",
+   "hasProfanityFilter",
+   "hideResult",
+   "icon",
+   "id",
+   "imageUrl",
+   "input",
+   "isLive",
+   "isMandatory",
+   "isMultiple",
+   "isPublicHidden",
+   "isRandomized",
+   "label",
+   "maximum",
+   "maximumLabel",
+   "minimum",
+   "minimumLabel",
+   "mode",
+   "name",
+   "options",
+   "parentCustomFormId",
+   "placeholder",
+   "position",
+   "reportType",
+   "resultsAsPieChart",
+   "showRespondentNames",
+   "status",
+   "tenantId",
+   "timer",
+   "type",
+   "uniqueKey",
+   "updatedAt",
+   "widthClass"
+  ],
+  "variable": "customForms"
+ },
+ "CustomFormOption": {
+  "children": {
+   "customFormValues": "CustomFormValue|_id|customFormOptionId"
+  },
+  "class": "CustomFormOptions",
+  "collection": "custom_form_options",
+  "dateFields": [],
+  "fields": {
+   "conditions": {
+    "default": [],
+    "fk": {},
+    "isArray": true,
+    "kind": "array",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "correctValue": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "customFormId": {
+    "default": null,
+    "fk": {
+     "foreign": "customFormId",
+     "model": "CustomForm",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "hasCondition": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "label": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "name": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "position": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "number",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": "active",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "value": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "customForm": "CustomForm|_id|customFormId"
+  },
+  "plural": "customFormOptions",
+  "required": [],
+  "single": "customFormOption",
+  "validFields": [
+   "conditions",
+   "correctValue",
+   "customFormId",
+   "hasCondition",
+   "id",
+   "label",
+   "name",
+   "position",
+   "status",
+   "tenantId",
+   "value"
+  ],
+  "variable": "customFormOptions"
+ },
+ "CustomFormSubmission": {
+  "children": {
+   "customFormValues": "CustomFormValue|_id|customFormSubmissionId"
+  },
+  "class": "CustomFormSubmissions",
+  "collection": "custom_form_submissions",
+  "dateFields": [
+   "createdAt",
+   "updatedAt"
+  ],
+  "fields": {
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "updatedAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {},
+  "plural": "customFormSubmissions",
+  "required": [],
+  "single": "customFormSubmission",
+  "validFields": [
+   "createdAt",
+   "id",
+   "tenantId",
+   "updatedAt",
+   "userId"
+  ],
+  "variable": "customFormSubmissions"
+ },
+ "CustomFormValue": {
+  "children": {},
+  "class": "CustomFormValues",
+  "collection": "custom_form_values",
+  "dateFields": [
+   "createdAt"
+  ],
+  "fields": {
+   "correct": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "customFormId": {
+    "default": null,
+    "fk": {
+     "foreign": "customFormId",
+     "model": "CustomForm",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "customFormOptionId": {
+    "default": null,
+    "fk": {
+     "foreign": "customFormOptionId",
+     "model": "CustomFormOption",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "customFormSubmissionId": {
+    "default": null,
+    "fk": {
+     "foreign": "customFormSubmissionId",
+     "model": "CustomFormSubmission",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isAnonymous": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "time": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "number",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "value": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "customForm": "CustomForm|_id|customFormId",
+   "customFormOption": "CustomFormOption|_id|customFormOptionId",
+   "customFormSubmission": "CustomFormSubmission|_id|customFormSubmissionId"
+  },
+  "plural": "customFormValues",
+  "required": [],
+  "single": "customFormValue",
+  "validFields": [
+   "correct",
+   "createdAt",
+   "customFormId",
+   "customFormOptionId",
+   "customFormSubmissionId",
+   "id",
+   "isAnonymous",
+   "tenantId",
+   "time",
+   "userId",
+   "value"
+  ],
+  "variable": "customFormValues"
+ },
+ "EnabledCustomForm": {
+  "children": {},
+  "class": "EnabledCustomForms",
+  "collection": "enabled_custom_forms",
+  "dateFields": [
+   "createdAt"
+  ],
+  "fields": {
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "customFormId": {
+    "default": null,
+    "fk": {
+     "foreign": "customFormId",
+     "model": "CustomForm",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isMandatory": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isPublicHidden": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "position": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "number",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "customForm": "CustomForm|_id|customFormId"
+  },
+  "plural": "enabledCustomForms",
+  "required": [],
+  "single": "enabledCustomForm",
+  "validFields": [
+   "createdAt",
+   "customFormId",
+   "id",
+   "isMandatory",
+   "isPublicHidden",
+   "position",
+   "tenantId"
+  ],
+  "variable": "enabledCustomForms"
+ },
+ "Invoice": {
+  "children": {
+   "invoiceItems": "InvoiceItem|_id|invoiceId",
+   "paymentAllocations": "PaymentAllocation|_id|invoiceId"
+  },
+  "class": "Invoices",
+  "collection": "invoices",
+  "dateFields": [
+   "dueDate",
+   "paidDate"
+  ],
+  "fields": {
+   "amountDue": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "amountPaid": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "amountRemaining": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "dueDate": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "paidDate": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": "flat",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 5,
+    "protected": false,
+    "required": false
+   },
+   "subscriptionId": {
+    "default": null,
+    "fk": {
+     "foreign": "subscriptionId",
+     "model": "Subscription",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "subscription": "Subscription|_id|subscriptionId",
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "invoices",
+  "required": [],
+  "single": "invoice",
+  "validFields": [
+   "amountDue",
+   "amountPaid",
+   "amountRemaining",
+   "dueDate",
+   "id",
+   "paidDate",
+   "status",
+   "subscriptionId",
+   "tenantId"
+  ],
+  "variable": "invoices"
+ },
+ "InvoiceItem": {
+  "children": {},
+  "class": "InvoiceItems",
+  "collection": "invoice_items",
+  "dateFields": [
+   "createdAt",
+   "endPeriod",
+   "startPeriod"
+  ],
+  "fields": {
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "currency": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "description": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "endPeriod": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "invoiceId": {
+    "default": null,
+    "fk": {
+     "foreign": "invoiceId",
+     "model": "Invoice",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "metadata": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "moduleId": {
+    "default": null,
+    "fk": {
+     "foreign": "moduleId",
+     "model": "Module",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "pricingType": {
+    "default": "flat",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 4,
+    "protected": false,
+    "required": false
+   },
+   "quantity": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "startPeriod": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "subscriptionItemId": {
+    "default": null,
+    "fk": {
+     "foreign": "subscriptionItemId",
+     "model": "SubscriptionItem",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "totalPrice": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "unitPrice": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "invoice": "Invoice|_id|invoiceId",
+   "module": "Module|_id|moduleId",
+   "subscriptionItem": "SubscriptionItem|_id|subscriptionItemId",
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "invoiceItems",
+  "required": [],
+  "single": "invoiceItem",
+  "validFields": [
+   "createdAt",
+   "currency",
+   "description",
+   "endPeriod",
+   "id",
+   "invoiceId",
+   "metadata",
+   "moduleId",
+   "pricingType",
+   "quantity",
+   "startPeriod",
+   "subscriptionItemId",
+   "tenantId",
+   "totalPrice",
+   "unitPrice"
+  ],
+  "variable": "invoiceItems"
+ },
+ "IpAccessRule": {
+  "children": {},
+  "class": "IpAccessRules",
+  "collection": "ip_access_rules",
+  "dateFields": [
+   "createdAt",
+   "expiresAt"
+  ],
+  "fields": {
+   "body": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "expiresAt": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "headers": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "ipAddress": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": true
+   },
+   "method": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "reason": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "source": {
+    "default": "manual",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "type": {
+    "default": "blacklist",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "url": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "ipAccessRules",
+  "required": [
+   "ipAddress"
+  ],
+  "single": "ipAccessRule",
+  "validFields": [
+   "body",
+   "createdAt",
+   "expiresAt",
+   "headers",
+   "id",
+   "ipAddress",
+   "method",
+   "reason",
+   "source",
+   "tenantId",
+   "type",
+   "url"
+  ],
+  "variable": "ipAccessRules"
+ },
+ "Location": {
+  "children": {
+   "parentLocations": "Location|_id|parentId"
+  },
+  "class": "Locations",
+  "collection": "locations",
+  "dateFields": [],
+  "fields": {
+   "currency": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "flag": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "latitude": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "longitude": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "name": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "parentId": {
+    "default": null,
+    "fk": {
+     "foreign": "parentId",
+     "model": "Location",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "phoneCode": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "shortCode": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "type": {
+    "default": "region",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 4,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": false,
+  "parents": {
+   "parent": "Location|_id|parentId"
+  },
+  "plural": "locations",
+  "required": [],
+  "single": "location",
+  "validFields": [
+   "currency",
+   "flag",
+   "id",
+   "latitude",
+   "longitude",
+   "name",
+   "parentId",
+   "phoneCode",
+   "shortCode",
+   "type"
+  ],
+  "variable": "locations"
+ },
+ "LoginAttempt": {
+  "children": {},
+  "class": "LoginAttempts",
+  "collection": "login_attempts",
+  "dateFields": [
+   "timestamp"
+  ],
+  "fields": {
+   "domain": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "profileId": {
+    "default": null,
+    "fk": {
+     "foreign": "profileId",
+     "model": "Profile",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": "active",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "timestamp": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "username": {
+    "default": "active",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "profile": "Profile|_id|profileId",
+   "tenant": "Tenant|_id|tenantId",
+   "user": "User|_id|userId"
+  },
+  "plural": "loginAttempts",
+  "required": [],
+  "single": "loginAttempt",
+  "validFields": [
+   "domain",
+   "id",
+   "profileId",
+   "status",
+   "tenantId",
+   "timestamp",
+   "userId",
+   "username"
+  ],
+  "variable": "loginAttempts"
+ },
+ "Module": {
+  "children": {
+   "invoiceItems": "InvoiceItem|_id|moduleId",
+   "pricingPlans": "PricingPlan|_id|moduleId",
+   "subscriptionItems": "SubscriptionItem|_id|moduleId",
+   "usageRecords": "UsageRecord|_id|moduleId"
+  },
+  "class": "Modules",
+  "collection": "modules",
+  "dateFields": [],
+  "fields": {
+   "description": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "enabled": {
+    "default": true,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "moduleName": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "title": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": false,
+  "parents": {},
+  "plural": "modules",
+  "required": [],
+  "single": "module",
+  "validFields": [
+   "description",
+   "enabled",
+   "id",
+   "moduleName",
+   "title"
+  ],
+  "variable": "modules"
+ },
+ "Notification": {
+  "children": {},
+  "class": "Notifications",
+  "collection": "notifications",
+  "dateFields": [
+   "timestamp"
+  ],
+  "fields": {
+   "attachment": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "content": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isSeen": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "link": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "profileId": {
+    "default": null,
+    "fk": {
+     "foreign": "profileId",
+     "model": "Profile",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "recipient": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "recipientName": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "referenceId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "referenceName": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "replyTo": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "response": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "responseReference": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "senderName": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 4,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "timestamp": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "title": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "trackingCode": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "type": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 3,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "profile": "Profile|_id|profileId",
+   "tenant": "Tenant|_id|tenantId",
+   "user": "User|_id|userId"
+  },
+  "plural": "notifications",
+  "required": [],
+  "single": "notification",
+  "validFields": [
+   "attachment",
+   "content",
+   "id",
+   "isSeen",
+   "link",
+   "profileId",
+   "recipient",
+   "recipientName",
+   "referenceId",
+   "referenceName",
+   "replyTo",
+   "response",
+   "responseReference",
+   "senderName",
+   "status",
+   "tenantId",
+   "timestamp",
+   "title",
+   "trackingCode",
+   "type",
+   "userId"
+  ],
+  "variable": "notifications"
+ },
+ "Order": {
+  "children": {
+   "orderItems": "OrderItem|_id|orderId"
+  },
+  "class": "Orders",
+  "collection": "orders",
+  "dateFields": [
+   "placedAt"
+  ],
+  "fields": {
+   "createdById": {
+    "default": null,
+    "fk": {
+     "foreign": "createdById",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "placedAt": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tags": {
+    "default": [],
+    "fk": {},
+    "isArray": true,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "title": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": true
+   },
+   "total": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "createdBy": "User|_id|createdById",
+   "tenant": "Tenant|_id|tenantId",
+   "user": "User|_id|userId"
+  },
+  "plural": "orders",
+  "required": [
+   "title"
+  ],
+  "single": "order",
+  "validFields": [
+   "createdById",
+   "id",
+   "placedAt",
+   "tags",
+   "tenantId",
+   "title",
+   "total",
+   "userId"
+  ],
+  "variable": "orders"
+ },
+ "OrderItem": {
+  "children": {},
+  "class": "OrderItems",
+  "collection": "order_items",
+  "dateFields": [],
+  "fields": {
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "orderId": {
+    "default": null,
+    "fk": {
+     "foreign": "orderId",
+     "model": "Order",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "quantity": {
+    "default": 1,
+    "fk": {},
+    "isArray": false,
+    "kind": "number",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": false,
+  "parents": {
+   "order": "Order|_id|orderId"
+  },
+  "plural": "orderItems",
+  "required": [],
+  "single": "orderItem",
+  "validFields": [
+   "id",
+   "orderId",
+   "quantity",
+   "status"
+  ],
+  "variable": "orderItems"
+ },
+ "Payment": {
+  "children": {
+   "accountCredits": "AccountCredit|_id|paymentId",
+   "paymentAllocations": "PaymentAllocation|_id|paymentId",
+   "paymentProviderRequests": "PaymentProviderRequest|_id|paymentId"
+  },
+  "class": "Payments",
+  "collection": "payments",
+  "dateFields": [
+   "createdAt",
+   "paidAt",
+   "refundedAt",
+   "updatedAt"
+  ],
+  "fields": {
+   "amount": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "channel": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 13,
+    "protected": false,
+    "required": false
+   },
+   "charge": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "checkoutUrl": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "createdBy": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "currency": {
+    "default": "TZS",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "failureReason": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isPaid": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "message": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "metadata": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "method": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 11,
+    "protected": false,
+    "required": false
+   },
+   "paidAt": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "paymentMethod": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 6,
+    "protected": false,
+    "required": false
+   },
+   "paymentReference": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "paymentTagId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "provider": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "providerConfig": {
+    "default": "default",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "providerPaymentId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "providerReference": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "reference": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "refundedAt": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 5,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tillNumber": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "transactionData": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "txnAmount": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "txnDate": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "txnId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "txnPhone": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "updatedAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "payments",
+  "required": [],
+  "single": "payment",
+  "validFields": [
+   "amount",
+   "channel",
+   "charge",
+   "checkoutUrl",
+   "createdAt",
+   "createdBy",
+   "currency",
+   "failureReason",
+   "id",
+   "isPaid",
+   "message",
+   "metadata",
+   "method",
+   "paidAt",
+   "paymentMethod",
+   "paymentReference",
+   "paymentTagId",
+   "provider",
+   "providerConfig",
+   "providerPaymentId",
+   "providerReference",
+   "reference",
+   "refundedAt",
+   "status",
+   "tenantId",
+   "tillNumber",
+   "transactionData",
+   "txnAmount",
+   "txnDate",
+   "txnId",
+   "txnPhone",
+   "updatedAt"
+  ],
+  "variable": "payments"
+ },
+ "PaymentAllocation": {
+  "children": {},
+  "class": "PaymentAllocations",
+  "collection": "payment_allocations",
+  "dateFields": [
+   "createdAt"
+  ],
+  "fields": {
+   "amountAllocated": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "invoiceId": {
+    "default": null,
+    "fk": {
+     "foreign": "invoiceId",
+     "model": "Invoice",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "paymentId": {
+    "default": null,
+    "fk": {
+     "foreign": "paymentId",
+     "model": "Payment",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "invoice": "Invoice|_id|invoiceId",
+   "payment": "Payment|_id|paymentId",
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "paymentAllocations",
+  "required": [],
+  "single": "paymentAllocation",
+  "validFields": [
+   "amountAllocated",
+   "createdAt",
+   "id",
+   "invoiceId",
+   "paymentId",
+   "tenantId"
+  ],
+  "variable": "paymentAllocations"
+ },
+ "PaymentProviderRequest": {
+  "children": {},
+  "class": "PaymentProviderRequests",
+  "collection": "payment_provider_requests",
+  "dateFields": [
+   "createdAt"
+  ],
+  "fields": {
+   "action": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 1,
+    "protected": false,
+    "required": false
+   },
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "durationMs": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "number",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "errorCode": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "errorMessage": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "httpStatus": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "number",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "paymentId": {
+    "default": null,
+    "fk": {
+     "foreign": "paymentId",
+     "model": "Payment",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "provider": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "providerReference": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "reference": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "request": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "response": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "payment": "Payment|_id|paymentId",
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "paymentProviderRequests",
+  "required": [],
+  "single": "paymentProviderRequest",
+  "validFields": [
+   "action",
+   "createdAt",
+   "durationMs",
+   "errorCode",
+   "errorMessage",
+   "httpStatus",
+   "id",
+   "paymentId",
+   "provider",
+   "providerReference",
+   "reference",
+   "request",
+   "response",
+   "status",
+   "tenantId"
+  ],
+  "variable": "paymentProviderRequests"
+ },
+ "PricingPlan": {
+  "children": {
+   "subscriptionItems": "SubscriptionItem|_id|pricingPlanId"
+  },
+  "class": "PricingPlans",
+  "collection": "pricing_plans",
+  "dateFields": [],
+  "fields": {
+   "billingCycle": {
+    "default": "flat",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "graceDays": {
+    "default": 7,
+    "fk": {},
+    "isArray": false,
+    "kind": "number",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "moduleId": {
+    "default": null,
+    "fk": {
+     "foreign": "moduleId",
+     "model": "Module",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "price": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "pricingType": {
+    "default": "flat",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 4,
+    "protected": false,
+    "required": false
+   },
+   "trialDays": {
+    "default": 30,
+    "fk": {},
+    "isArray": false,
+    "kind": "number",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": false,
+  "parents": {
+   "module": "Module|_id|moduleId"
+  },
+  "plural": "pricingPlans",
+  "required": [],
+  "single": "pricingPlan",
+  "validFields": [
+   "billingCycle",
+   "graceDays",
+   "id",
+   "moduleId",
+   "price",
+   "pricingType",
+   "trialDays"
+  ],
+  "variable": "pricingPlans"
+ },
+ "Profile": {
+  "children": {
+   "auditTrails": "AuditTrail|_id|profileId",
+   "authGroups": "AuthGroup|_id|profileId",
+   "authUserPermissions": "AuthUserPermission|_id|profileId",
+   "chatGroups": "ChatGroup|_id|profileId",
+   "loginAttempts": "LoginAttempt|_id|profileId",
+   "notifications": "Notification|_id|profileId",
+   "profileUsers": "ProfileUser|_id|profileId",
+   "pushNotifications": "PushNotification|_id|profileId",
+   "refreshTokens": "RefreshToken|_id|profileId",
+   "reports": "Report|_id|profileId",
+   "socketMessages": "SocketMessage|_id|profileId"
+  },
+  "class": "Profiles",
+  "collection": "profiles",
+  "dateFields": [
+   "deletedAt"
+  ],
+  "fields": {
+   "address": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "deletedAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "description": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "domain": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "email": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isApproved": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isPrivate": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "language": {
+    "default": "en",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "name": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "phone": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "profileUrl": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "file",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": "active",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "subdomain": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "type": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 3,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "website": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "tenant": "Tenant|_id|tenantId",
+   "user": "User|_id|userId"
+  },
+  "plural": "profiles",
+  "required": [],
+  "single": "profile",
+  "validFields": [
+   "address",
+   "deletedAt",
+   "description",
+   "domain",
+   "email",
+   "id",
+   "isApproved",
+   "isPrivate",
+   "language",
+   "name",
+   "phone",
+   "profileUrl",
+   "status",
+   "subdomain",
+   "tenantId",
+   "type",
+   "userId",
+   "website"
+  ],
+  "variable": "profiles"
+ },
+ "ProfileUser": {
+  "children": {},
+  "class": "ProfileUsers",
+  "collection": "profile_users",
+  "dateFields": [
+   "createdAt"
+  ],
+  "fields": {
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "profileId": {
+    "default": null,
+    "fk": {
+     "foreign": "profileId",
+     "model": "Profile",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "role": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": "active",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "profile": "Profile|_id|profileId",
+   "tenant": "Tenant|_id|tenantId",
+   "user": "User|_id|userId"
+  },
+  "plural": "profileUsers",
+  "required": [],
+  "single": "profileUser",
+  "validFields": [
+   "createdAt",
+   "id",
+   "profileId",
+   "role",
+   "status",
+   "tenantId",
+   "userId"
+  ],
+  "variable": "profileUsers"
+ },
+ "PushNotification": {
+  "children": {},
+  "class": "PushNotifications",
+  "collection": "push_notifications",
+  "dateFields": [
+   "createdAt",
+   "updatedAt"
+  ],
+  "fields": {
+   "action": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "actionTargetId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "body": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "deviceId": {
+    "default": null,
+    "fk": {
+     "foreign": "deviceId",
+     "model": "UserDevice",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "iconUrl": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "file",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isDelivered": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "payload": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "pictureUrl": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "file",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "profileId": {
+    "default": null,
+    "fk": {
+     "foreign": "profileId",
+     "model": "Profile",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 3,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "title": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "updatedAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "device": "UserDevice|_id|deviceId",
+   "profile": "Profile|_id|profileId",
+   "tenant": "Tenant|_id|tenantId",
+   "user": "User|_id|userId"
+  },
+  "plural": "pushNotifications",
+  "required": [],
+  "single": "pushNotification",
+  "validFields": [
+   "action",
+   "actionTargetId",
+   "body",
+   "createdAt",
+   "deviceId",
+   "iconUrl",
+   "id",
+   "isDelivered",
+   "payload",
+   "pictureUrl",
+   "profileId",
+   "status",
+   "tenantId",
+   "title",
+   "updatedAt",
+   "userId"
+  ],
+  "variable": "pushNotifications"
+ },
+ "RefreshToken": {
+  "children": {},
+  "class": "RefreshTokens",
+  "collection": "refresh_tokens",
+  "dateFields": [
+   "expiresAt"
+  ],
+  "fields": {
+   "adminId": {
+    "default": null,
+    "fk": {
+     "foreign": "adminId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "domain": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "expiresAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "ipAddress": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "profileId": {
+    "default": null,
+    "fk": {
+     "foreign": "profileId",
+     "model": "Profile",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "revoked": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tokenHash": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": true,
+    "required": false
+   },
+   "userAgent": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "admin": "User|_id|adminId",
+   "profile": "Profile|_id|profileId",
+   "tenant": "Tenant|_id|tenantId",
+   "user": "User|_id|userId"
+  },
+  "plural": "refreshTokens",
+  "required": [],
+  "single": "refreshToken",
+  "validFields": [
+   "adminId",
+   "domain",
+   "expiresAt",
+   "id",
+   "ipAddress",
+   "profileId",
+   "revoked",
+   "tenantId",
+   "tokenHash",
+   "userAgent",
+   "userId"
+  ],
+  "variable": "refreshTokens"
+ },
+ "Report": {
+  "children": {},
+  "class": "Reports",
+  "collection": "reports",
+  "dateFields": [
+   "createdAt"
+  ],
+  "fields": {
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "data": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "description": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "emails": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isDashboard": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isPrivate": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "name": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "profileId": {
+    "default": null,
+    "fk": {
+     "foreign": "profileId",
+     "model": "Profile",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "sendEmail": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "profile": "Profile|_id|profileId",
+   "tenant": "Tenant|_id|tenantId",
+   "user": "User|_id|userId"
+  },
+  "plural": "reports",
+  "required": [],
+  "single": "report",
+  "validFields": [
+   "createdAt",
+   "data",
+   "description",
+   "emails",
+   "id",
+   "isDashboard",
+   "isPrivate",
+   "name",
+   "profileId",
+   "sendEmail",
+   "tenantId",
+   "userId"
+  ],
+  "variable": "reports"
+ },
+ "SocketMessage": {
+  "children": {},
+  "class": "SocketMessages",
+  "collection": "socket_messages",
+  "dateFields": [
+   "createdAt",
+   "updatedAt"
+  ],
+  "fields": {
+   "action": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "content": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "deviceId": {
+    "default": null,
+    "fk": {
+     "foreign": "deviceId",
+     "model": "UserDevice",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "namespace": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "profileId": {
+    "default": null,
+    "fk": {
+     "foreign": "profileId",
+     "model": "Profile",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 3,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "updatedAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "device": "UserDevice|_id|deviceId",
+   "profile": "Profile|_id|profileId",
+   "tenant": "Tenant|_id|tenantId",
+   "user": "User|_id|userId"
+  },
+  "plural": "socketMessages",
+  "required": [],
+  "single": "socketMessage",
+  "validFields": [
+   "action",
+   "content",
+   "createdAt",
+   "deviceId",
+   "id",
+   "namespace",
+   "profileId",
+   "status",
+   "tenantId",
+   "updatedAt",
+   "userId"
+  ],
+  "variable": "socketMessages"
+ },
+ "Subscription": {
+  "children": {
+   "invoices": "Invoice|_id|subscriptionId",
+   "subscriptionItems": "SubscriptionItem|_id|subscriptionId"
+  },
+  "class": "Subscriptions",
+  "collection": "subscriptions",
+  "dateFields": [
+   "canceledAt",
+   "currentPeriodEnd",
+   "currentPeriodStart",
+   "gracePeriodEnd",
+   "nextBillingDate",
+   "trialEnd",
+   "trialStart"
+  ],
+  "fields": {
+   "canceledAt": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "currentPeriodEnd": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "currentPeriodStart": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "gracePeriodEnd": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "nextBillingDate": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": "flat",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 7,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "trialEnd": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "trialStart": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "subscriptions",
+  "required": [],
+  "single": "subscription",
+  "validFields": [
+   "canceledAt",
+   "currentPeriodEnd",
+   "currentPeriodStart",
+   "gracePeriodEnd",
+   "id",
+   "nextBillingDate",
+   "status",
+   "tenantId",
+   "trialEnd",
+   "trialStart"
+  ],
+  "variable": "subscriptions"
+ },
+ "SubscriptionItem": {
+  "children": {
+   "invoiceItems": "InvoiceItem|_id|subscriptionItemId"
+  },
+  "class": "SubscriptionItems",
+  "collection": "subscription_items",
+  "dateFields": [],
+  "fields": {
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "moduleId": {
+    "default": null,
+    "fk": {
+     "foreign": "moduleId",
+     "model": "Module",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "pricingPlanId": {
+    "default": null,
+    "fk": {
+     "foreign": "pricingPlanId",
+     "model": "PricingPlan",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "quantity": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "subscriptionId": {
+    "default": null,
+    "fk": {
+     "foreign": "subscriptionId",
+     "model": "Subscription",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "module": "Module|_id|moduleId",
+   "pricingPlan": "PricingPlan|_id|pricingPlanId",
+   "subscription": "Subscription|_id|subscriptionId",
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "subscriptionItems",
+  "required": [],
+  "single": "subscriptionItem",
+  "validFields": [
+   "id",
+   "moduleId",
+   "pricingPlanId",
+   "quantity",
+   "subscriptionId",
+   "tenantId"
+  ],
+  "variable": "subscriptionItems"
+ },
+ "Tenant": {
+  "children": {
+   "accountCredits": "AccountCredit|_id|tenantId",
+   "auditTrails": "AuditTrail|_id|tenantId",
+   "authGroupPermissions": "AuthGroupPermission|_id|tenantId",
+   "authGroups": "AuthGroup|_id|tenantId",
+   "authUserPermissions": "AuthUserPermission|_id|tenantId",
+   "chatGroupMembers": "ChatGroupMember|_id|tenantId",
+   "chatGroups": "ChatGroup|_id|tenantId",
+   "chatMessageStates": "ChatMessageState|_id|tenantId",
+   "chatMessages": "ChatMessage|_id|tenantId",
+   "invoiceItems": "InvoiceItem|_id|tenantId",
+   "invoices": "Invoice|_id|tenantId",
+   "ipAccessRules": "IpAccessRule|_id|tenantId",
+   "loginAttempts": "LoginAttempt|_id|tenantId",
+   "notifications": "Notification|_id|tenantId",
+   "orders": "Order|_id|tenantId",
+   "paymentAllocations": "PaymentAllocation|_id|tenantId",
+   "paymentProviderRequests": "PaymentProviderRequest|_id|tenantId",
+   "payments": "Payment|_id|tenantId",
+   "profileUsers": "ProfileUser|_id|tenantId",
+   "profiles": "Profile|_id|tenantId",
+   "pushNotifications": "PushNotification|_id|tenantId",
+   "refreshTokens": "RefreshToken|_id|tenantId",
+   "reports": "Report|_id|tenantId",
+   "socketMessages": "SocketMessage|_id|tenantId",
+   "subscriptionItems": "SubscriptionItem|_id|tenantId",
+   "subscriptions": "Subscription|_id|tenantId",
+   "tenantConfigs": "TenantConfig|_id|tenantId",
+   "tenantFeatures": "TenantFeature|_id|tenantId",
+   "tenantUsers": "TenantUser|_id|tenantId",
+   "usageRecords": "UsageRecord|_id|tenantId",
+   "userDeviceCommands": "UserDeviceCommand|_id|tenantId",
+   "userDevices": "UserDevice|_id|tenantId",
+   "userVerifications": "UserVerification|_id|tenantId"
+  },
+  "class": "Tenants",
+  "collection": "tenants",
+  "dateFields": [
+   "createdAt"
+  ],
+  "fields": {
+   "address": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "customDomain": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "customSubdomain": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "description": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "domain": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "email": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "faviconUrl": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "file",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isApproved": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "language": {
+    "default": "en",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "logoUrl": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "file",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "name": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "phone": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": "active",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "subdomain": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "type": {
+    "default": "COMPANY",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 3,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "website": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": false,
+  "parents": {
+   "user": "User|_id|userId"
+  },
+  "plural": "tenants",
+  "required": [],
+  "single": "tenant",
+  "validFields": [
+   "address",
+   "createdAt",
+   "customDomain",
+   "customSubdomain",
+   "description",
+   "domain",
+   "email",
+   "faviconUrl",
+   "id",
+   "isApproved",
+   "language",
+   "logoUrl",
+   "name",
+   "phone",
+   "status",
+   "subdomain",
+   "type",
+   "userId",
+   "website"
+  ],
+  "variable": "tenants"
+ },
+ "TenantCatch": {
+  "children": {},
+  "class": "TenantCatches",
+  "collection": "tenant_catches",
+  "dateFields": [],
+  "fields": {
+   "domain": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {},
+  "plural": "tenantCatches",
+  "required": [],
+  "single": "tenantCatch",
+  "validFields": [
+   "domain",
+   "id",
+   "tenantId"
+  ],
+  "variable": "tenantCatches"
+ },
+ "TenantConfig": {
+  "children": {},
+  "class": "TenantConfigs",
+  "collection": "tenant_configs",
+  "dateFields": [],
+  "fields": {
+   "darkTheme": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "defaultTheme": {
+    "default": "lightTheme",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "hasMembership": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "language": {
+    "default": "en",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "lightTheme": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "otherConfig": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "payment": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "publicCanRegister": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "sms": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "smtp": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "whatsapp": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "tenantConfigs",
+  "required": [],
+  "single": "tenantConfig",
+  "validFields": [
+   "darkTheme",
+   "defaultTheme",
+   "hasMembership",
+   "id",
+   "language",
+   "lightTheme",
+   "otherConfig",
+   "payment",
+   "publicCanRegister",
+   "sms",
+   "smtp",
+   "tenantId",
+   "whatsapp"
+  ],
+  "variable": "tenantConfigs"
+ },
+ "TenantFeature": {
+  "children": {},
+  "class": "TenantFeatures",
+  "collection": "tenant_features",
+  "dateFields": [],
+  "fields": {
+   "enabled": {
+    "default": true,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "featureCode": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "moduleName": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "tenantFeatures",
+  "required": [],
+  "single": "tenantFeature",
+  "validFields": [
+   "enabled",
+   "featureCode",
+   "id",
+   "moduleName",
+   "tenantId"
+  ],
+  "variable": "tenantFeatures"
+ },
+ "TenantUser": {
+  "children": {},
+  "class": "TenantUsers",
+  "collection": "tenant_users",
+  "dateFields": [
+   "createdAt"
+  ],
+  "fields": {
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "role": {
+    "default": "public",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": "active",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "tenant": "Tenant|_id|tenantId",
+   "user": "User|_id|userId"
+  },
+  "plural": "tenantUsers",
+  "required": [],
+  "single": "tenantUser",
+  "validFields": [
+   "createdAt",
+   "id",
+   "role",
+   "status",
+   "tenantId",
+   "userId"
+  ],
+  "variable": "tenantUsers"
+ },
+ "TranslatorLanguage": {
+  "children": {
+   "translatorTranslations": "TranslatorTranslation|_id|translatorLanguageId"
+  },
+  "class": "TranslatorLanguages",
+  "collection": "translator_languages",
+  "dateFields": [],
+  "fields": {
+   "flag": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "locale": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "name": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": "active",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": false,
+  "parents": {},
+  "plural": "translatorLanguages",
+  "required": [],
+  "single": "translatorLanguage",
+  "validFields": [
+   "flag",
+   "id",
+   "locale",
+   "name",
+   "status"
+  ],
+  "variable": "translatorLanguages"
+ },
+ "TranslatorTranslation": {
+  "children": {},
+  "class": "TranslatorTranslations",
+  "collection": "translator_translations",
+  "dateFields": [],
+  "fields": {
+   "description": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "group": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "item": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "locale": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "locked": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "moduleName": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "text": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "translatorLanguageId": {
+    "default": null,
+    "fk": {
+     "foreign": "translatorLanguageId",
+     "model": "TranslatorLanguage",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "unstable": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": false,
+  "parents": {
+   "translatorLanguage": "TranslatorLanguage|_id|translatorLanguageId"
+  },
+  "plural": "translatorTranslations",
+  "required": [],
+  "single": "translatorTranslation",
+  "validFields": [
+   "description",
+   "group",
+   "id",
+   "item",
+   "locale",
+   "locked",
+   "moduleName",
+   "text",
+   "translatorLanguageId",
+   "unstable"
+  ],
+  "variable": "translatorTranslations"
+ },
+ "UsageRecord": {
+  "children": {},
+  "class": "UsageRecords",
+  "collection": "usage_records",
+  "dateFields": [
+   "periodEnd",
+   "periodStart"
+  ],
+  "fields": {
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "moduleId": {
+    "default": null,
+    "fk": {
+     "foreign": "moduleId",
+     "model": "Module",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "periodEnd": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "periodStart": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "quantity": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "float",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "module": "Module|_id|moduleId",
+   "tenant": "Tenant|_id|tenantId"
+  },
+  "plural": "usageRecords",
+  "required": [],
+  "single": "usageRecord",
+  "validFields": [
+   "id",
+   "moduleId",
+   "periodEnd",
+   "periodStart",
+   "quantity",
+   "tenantId"
+  ],
+  "variable": "usageRecords"
+ },
+ "User": {
+  "children": {
+   "adminRefreshTokens": "RefreshToken|_id|adminId",
+   "auditTrails": "AuditTrail|_id|userId",
+   "authUserPermissions": "AuthUserPermission|_id|userId",
+   "createdByOrders": "Order|_id|createdById",
+   "loginAttempts": "LoginAttempt|_id|userId",
+   "notifications": "Notification|_id|userId",
+   "orders": "Order|_id|userId",
+   "profileUsers": "ProfileUser|_id|userId",
+   "profiles": "Profile|_id|userId",
+   "pushNotifications": "PushNotification|_id|userId",
+   "refreshTokens": "RefreshToken|_id|userId",
+   "reports": "Report|_id|userId",
+   "socketMessages": "SocketMessage|_id|userId",
+   "tenantUsers": "TenantUser|_id|userId",
+   "tenants": "Tenant|_id|userId",
+   "userDevices": "UserDevice|_id|userId",
+   "userVerifications": "UserVerification|_id|userId"
+  },
+  "class": "Users",
+  "collection": "users",
+  "dateFields": [
+   "createdAt",
+   "dateOfBirth",
+   "deletedAt",
+   "emailVerifiedAt",
+   "lastActive",
+   "otpCreatedAt",
+   "phoneVerifiedAt",
+   "updatedAt",
+   "whatsappVerifiedAt"
+  ],
+  "fields": {
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "dateOfBirth": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "deletedAt": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "deviceToken": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": true,
+    "required": false
+   },
+   "email": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "emailVerifiedAt": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "emailVerifyCode": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": true,
+    "required": false
+   },
+   "firstName": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "gender": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "googleToken": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": true,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isActive": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isBanned": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isEmailVerified": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isPhoneVerified": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isWhatsappVerified": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "lastActive": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "lastName": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "nickname": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "otpCode": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": true,
+    "required": false
+   },
+   "otpCreatedAt": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "password": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": true,
+    "required": false
+   },
+   "phone": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "phoneVerifiedAt": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "phoneVerifyCode": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": true,
+    "required": false
+   },
+   "profileUrl": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "file",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "rememberToken": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": true,
+    "required": false
+   },
+   "role": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "secondName": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": "active",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "token": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": true,
+    "required": false
+   },
+   "updatedAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userType": {
+    "default": "individual",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "username": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "usernameType": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 4,
+    "protected": false,
+    "required": false
+   },
+   "whatsapp": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "whatsappVerifiedAt": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "whatsappVerifyCode": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": true,
+    "required": false
+   }
+  },
+  "hasTenant": false,
+  "parents": {},
+  "plural": "users",
+  "required": [],
+  "single": "user",
+  "validFields": [
+   "createdAt",
+   "dateOfBirth",
+   "deletedAt",
+   "deviceToken",
+   "email",
+   "emailVerifiedAt",
+   "emailVerifyCode",
+   "firstName",
+   "gender",
+   "googleToken",
+   "id",
+   "isActive",
+   "isBanned",
+   "isEmailVerified",
+   "isPhoneVerified",
+   "isWhatsappVerified",
+   "lastActive",
+   "lastName",
+   "nickname",
+   "otpCode",
+   "otpCreatedAt",
+   "password",
+   "phone",
+   "phoneVerifiedAt",
+   "phoneVerifyCode",
+   "profileUrl",
+   "rememberToken",
+   "role",
+   "secondName",
+   "status",
+   "token",
+   "updatedAt",
+   "userType",
+   "username",
+   "usernameType",
+   "whatsapp",
+   "whatsappVerifiedAt",
+   "whatsappVerifyCode"
+  ],
+  "variable": "users"
+ },
+ "UserDevice": {
+  "children": {
+   "devicePushNotifications": "PushNotification|_id|deviceId",
+   "deviceSocketMessages": "SocketMessage|_id|deviceId",
+   "userDeviceCommands": "UserDeviceCommand|_id|userDeviceId"
+  },
+  "class": "UserDevices",
+  "collection": "user_devices",
+  "dateFields": [
+   "createdAt"
+  ],
+  "fields": {
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "deviceUuid": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "info": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "status": {
+    "default": "active",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 2,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "type": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "any",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "tenant": "Tenant|_id|tenantId",
+   "user": "User|_id|userId"
+  },
+  "plural": "userDevices",
+  "required": [],
+  "single": "userDevice",
+  "validFields": [
+   "createdAt",
+   "deviceUuid",
+   "id",
+   "info",
+   "status",
+   "tenantId",
+   "type",
+   "userId"
+  ],
+  "variable": "userDevices"
+ },
+ "UserDeviceCommand": {
+  "children": {},
+  "class": "UserDeviceCommands",
+  "collection": "user_device_commands",
+  "dateFields": [
+   "createdAt"
+  ],
+  "fields": {
+   "action": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "deviceUuid": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isReceived": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "isSent": {
+    "default": false,
+    "fk": {},
+    "isArray": false,
+    "kind": "bool",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "type": {
+    "default": "command",
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 3,
+    "protected": false,
+    "required": false
+   },
+   "userDeviceId": {
+    "default": null,
+    "fk": {
+     "foreign": "userDeviceId",
+     "model": "UserDevice",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "tenant": "Tenant|_id|tenantId",
+   "userDevice": "UserDevice|_id|userDeviceId"
+  },
+  "plural": "userDeviceCommands",
+  "required": [],
+  "single": "userDeviceCommand",
+  "validFields": [
+   "action",
+   "createdAt",
+   "deviceUuid",
+   "id",
+   "isReceived",
+   "isSent",
+   "tenantId",
+   "type",
+   "userDeviceId"
+  ],
+  "variable": "userDeviceCommands"
+ },
+ "UserVerification": {
+  "children": {},
+  "class": "UserVerifications",
+  "collection": "user_verifications",
+  "dateFields": [
+   "createdAt",
+   "otpCreatedAt",
+   "otpVerifiedAt",
+   "updatedAt"
+  ],
+  "fields": {
+   "count": {
+    "default": 0,
+    "fk": {},
+    "isArray": false,
+    "kind": "number",
+    "options": 0,
+    "protected": true,
+    "required": false
+   },
+   "createdAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "id": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "otpCode": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": true,
+    "required": false
+   },
+   "otpCreatedAt": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": true,
+    "required": false
+   },
+   "otpVerifiedAt": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "target": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": true,
+    "required": false
+   },
+   "tenantId": {
+    "default": null,
+    "fk": {
+     "foreign": "tenantId",
+     "model": "Tenant",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "updatedAt": {
+    "default": "now",
+    "fk": {},
+    "isArray": false,
+    "kind": "date",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "userId": {
+    "default": null,
+    "fk": {
+     "foreign": "userId",
+     "model": "User",
+     "primary": "_id"
+    },
+    "isArray": false,
+    "kind": "id",
+    "options": 0,
+    "protected": false,
+    "required": false
+   },
+   "username": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 0,
+    "protected": true,
+    "required": false
+   },
+   "usernameType": {
+    "default": null,
+    "fk": {},
+    "isArray": false,
+    "kind": "string",
+    "options": 4,
+    "protected": false,
+    "required": false
+   }
+  },
+  "hasTenant": true,
+  "parents": {
+   "tenant": "Tenant|_id|tenantId",
+   "user": "User|_id|userId"
+  },
+  "plural": "userVerifications",
+  "required": [],
+  "single": "userVerification",
+  "validFields": [
+   "count",
+   "createdAt",
+   "id",
+   "otpCode",
+   "otpCreatedAt",
+   "otpVerifiedAt",
+   "target",
+   "tenantId",
+   "updatedAt",
+   "userId",
+   "username",
+   "usernameType"
+  ],
+  "variable": "userVerifications"
+ }
+}

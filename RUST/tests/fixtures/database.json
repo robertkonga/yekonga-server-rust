@@ -1,0 +1,6 @@
+{
+  "Orders": {"userId": {"type": "ID", "foreignKey": "User.id"}, "tenantId": {"type": "ID", "foreignKey": "Tenant"}, "title": {"type": "String", "required": true}, "total": {"type": "Double"}, "tags": {"type": "[String]"}, "placedAt": {"type": "Date"}, "createdById": {"type": "ID", "relation": "User.id"}},
+  "OrderItems": {"orderId": {"type": "ID", "foreignKey": "Order.id"}, "quantity": {"type": "Integer", "default": 1}, "status": {"type": "String", "options": ["pending", "done"]}},
+  "Users": {"nickname": {"type": "String"}, "email": {"type": "Text"}},
+  "Category": {"parentId": {"type": "ID", "foreignKey": "Category.id"}, "name": {"type": "String"}}
+}

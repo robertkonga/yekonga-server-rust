@@ -1,0 +1,3045 @@
+{
+  "tenant": {
+    "Tenants": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "name": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "description": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "logoUrl": {
+        "type": "URL",
+        "default": null,
+        "required": false
+      },
+      "faviconUrl": {
+        "type": "URL",
+        "default": null,
+        "required": false
+      },
+      "type": {
+        "options": [
+          "NGO",
+          "COMPANY",
+          "PRIVATE"
+        ],
+        "type": "String",
+        "default": "COMPANY",
+        "required": false
+      },
+      "address": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "email": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "phone": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "website": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "domain": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "index": true
+      },
+      "subdomain": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "index": true
+      },
+      "customDomain": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "index": true
+      },
+      "customSubdomain": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "index": true
+      },
+      "language": {
+        "type": "String",
+        "default": "en",
+        "required": false
+      },
+      "isApproved": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "status": {
+        "options": [
+          "active",
+          "inactive"
+        ],
+        "type": "String",
+        "default": "active",
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "TenantConfigs": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "lightTheme": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "darkTheme": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "defaultTheme": {
+        "type": "String",
+        "default": "lightTheme",
+        "required": false
+      },
+      "smtp": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "sms": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "whatsapp": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "payment": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "publicCanRegister": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "hasMembership": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "otherConfig": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "language": {
+        "type": "String",
+        "default": "en",
+        "required": false
+      }
+    },
+    "TenantFeatures": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "moduleName": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "featureCode": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "enabled": {
+        "type": "Boolean",
+        "default": true,
+        "required": false
+      }
+    },
+    "TenantUsers": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "role": {
+        "options": [
+          "admin",
+          "public"
+        ],
+        "type": "String",
+        "default": "public",
+        "required": false
+      },
+      "status": {
+        "options": [
+          "active",
+          "inactive"
+        ],
+        "type": "String",
+        "default": "active",
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    }
+  },
+  "tenantCatch": {
+    "TenantCatches": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "type": "ID",
+        "default": null,
+        "required": false,
+        "index": true
+      },
+      "domain": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "index": true
+      }
+    }
+  },
+  "auth": {
+    "Users": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "firstName": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "secondName": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "lastName": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "username": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": false,
+        "index": true
+      },
+      "usernameType": {
+        "options": [
+          "name",
+          "email",
+          "phone",
+          "whatsapp"
+        ],
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": false
+      },
+      "email": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": false,
+        "index": true
+      },
+      "phone": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": false,
+        "index": true
+      },
+      "whatsapp": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": false,
+        "index": true
+      },
+      "profileUrl": {
+        "type": "URL",
+        "default": null,
+        "required": false
+      },
+      "gender": {
+        "options": [
+          "male",
+          "female"
+        ],
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "dateOfBirth": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "password": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": true
+      },
+      "role": {
+        "options": [
+          "admin",
+          "user"
+        ],
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "token": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": true
+      },
+      "googleToken": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": true
+      },
+      "rememberToken": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": true
+      },
+      "deviceToken": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": true
+      },
+      "status": {
+        "options": [
+          "active",
+          "inactive"
+        ],
+        "type": "String",
+        "default": "active",
+        "required": false
+      },
+      "isActive": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "isBanned": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "isPhoneVerified": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "phoneVerifyCode": {
+        "type": "String",
+        "default": false,
+        "required": false,
+        "protected": true
+      },
+      "phoneVerifiedAt": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "isEmailVerified": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "emailVerifyCode": {
+        "type": "String",
+        "default": false,
+        "required": false,
+        "protected": true
+      },
+      "emailVerifiedAt": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "isWhatsappVerified": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "whatsappVerifyCode": {
+        "type": "String",
+        "default": false,
+        "required": false,
+        "protected": true
+      },
+      "whatsappVerifiedAt": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "otpCode": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": true
+      },
+      "otpCreatedAt": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "userType": {
+        "options": [
+          "individual",
+          "organization"
+        ],
+        "type": "String",
+        "default": "individual",
+        "required": false
+      },
+      "lastActive": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      },
+      "updatedAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      },
+      "deletedAt": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      }
+    },
+    "UserVerifications": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "username": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": true
+      },
+      "usernameType": {
+        "options": [
+          "name",
+          "email",
+          "phone",
+          "whatsapp"
+        ],
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "target": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": true
+      },
+      "otpCode": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": true
+      },
+      "otpCreatedAt": {
+        "type": "Date",
+        "default": null,
+        "required": false,
+        "protected": true
+      },
+      "otpVerifiedAt": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "count": {
+        "type": "Number",
+        "default": 0,
+        "required": false,
+        "protected": true
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      },
+      "updatedAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "Profiles": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "name": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "description": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "profileUrl": {
+        "type": "URL",
+        "default": null,
+        "required": false
+      },
+      "type": {
+        "options": [
+          "admin",
+          "manager",
+          "user"
+        ],
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "address": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "email": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "phone": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "website": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "domain": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "subdomain": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "language": {
+        "type": "String",
+        "default": "en",
+        "required": false
+      },
+      "isPrivate": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "isApproved": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "status": {
+        "options": [
+          "active",
+          "inactive"
+        ],
+        "type": "String",
+        "default": "active",
+        "required": false
+      },
+      "deletedAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "ProfileUsers": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "profileId": {
+        "foreignKey": "Profile.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "role": {
+        "options": [
+          "manager",
+          "user"
+        ],
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "status": {
+        "options": [
+          "active",
+          "inactive"
+        ],
+        "type": "String",
+        "default": "active",
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "RefreshTokens": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "domain": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "profileId": {
+        "foreignKey": "Profile.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "adminId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tokenHash": {
+        "type": "String",
+        "default": null,
+        "required": false,
+        "protected": true
+      },
+      "userAgent": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "ipAddress": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "revoked": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "expiresAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "LoginAttempts": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "domain": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "profileId": {
+        "foreignKey": "Profile.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "username": {
+        "options": [
+          "success",
+          "fail"
+        ],
+        "type": "String",
+        "default": "active",
+        "required": false
+      },
+      "status": {
+        "options": [
+          "success",
+          "fail"
+        ],
+        "type": "String",
+        "default": "active",
+        "required": false
+      },
+      "timestamp": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "UserDevices": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "deviceUuid": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "type": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "info": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "status": {
+        "options": [
+          "active",
+          "inactive"
+        ],
+        "type": "String",
+        "default": "active",
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "UserDeviceCommands": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userDeviceId": {
+        "foreignKey": "UserDevice.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "deviceUuid": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "action": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "type": {
+        "options": [
+          "command",
+          "notification",
+          "chat"
+        ],
+        "type": "String",
+        "default": "command",
+        "required": false
+      },
+      "isSent": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "isReceived": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "AuthPermissions": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "moduleName": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "group": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "code": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "name": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "description": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "isVisible": {
+        "type": "Boolean",
+        "default": true,
+        "required": false
+      }
+    },
+    "AuthGroups": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "profileId": {
+        "foreignKey": "Profile.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "moduleName": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "name": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "description": {
+        "type": "String",
+        "default": null,
+        "required": false
+      }
+    },
+    "AuthGroupPermissions": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "authGroupId": {
+        "foreignKey": "AuthGroup.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "authPermissionId": {
+        "foreignKey": "AuthPermission.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      }
+    },
+    "AuthUserPermissions": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "profileId": {
+        "foreignKey": "Profile.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "authGroupId": {
+        "foreignKey": "AuthGroup.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "moduleName": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "code": {
+        "foreignKey": "AuthPermission.code",
+        "type": "String",
+        "default": null,
+        "required": false
+      }
+    },
+    "TranslatorLanguages": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "locale": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "name": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "flag": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "status": {
+        "options": [
+          "active",
+          "inactive"
+        ],
+        "type": "String",
+        "default": "active",
+        "required": false
+      }
+    },
+    "TranslatorTranslations": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "translatorLanguageId": {
+        "foreignKey": "TranslatorLanguage.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "locale": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "moduleName": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "group": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "item": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "description": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "text": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "unstable": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "locked": {
+        "type": "String",
+        "default": null,
+        "required": false
+      }
+    },
+    "Locations": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "parentId": {
+        "foreignKey": "Location.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "name": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "shortCode": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "phoneCode": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "currency": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "flag": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "type": {
+        "options": [
+          "country",
+          "region",
+          "district",
+          "ward"
+        ],
+        "type": "String",
+        "default": "region",
+        "required": false
+      },
+      "latitude": {
+        "type": "Float",
+        "default": null,
+        "required": false
+      },
+      "longitude": {
+        "type": "Float",
+        "default": null,
+        "required": false
+      }
+    }
+  },
+  "billing": {
+    "Modules": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "moduleName": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "title": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "description": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "enabled": {
+        "type": "Boolean",
+        "default": true,
+        "required": false
+      }
+    },
+    "PricingPlans": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "moduleId": {
+        "foreignKey": "Module.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "pricingType": {
+        "options": [
+          "flat",
+          "per_user",
+          "per_unit",
+          "metered"
+        ],
+        "type": "String",
+        "default": "flat",
+        "required": false
+      },
+      "billingCycle": {
+        "options": [
+          "monthly",
+          "yearly"
+        ],
+        "type": "String",
+        "default": "flat",
+        "required": false
+      },
+      "price": {
+        "type": "Float",
+        "default": 0,
+        "required": false
+      },
+      "trialDays": {
+        "type": "Number",
+        "default": 30,
+        "required": false
+      },
+      "graceDays": {
+        "type": "Number",
+        "default": 7,
+        "required": false
+      }
+    },
+    "Subscriptions": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "status": {
+        "options": [
+          "active",
+          "grace",
+          "trailing",
+          "past_due",
+          "canceled",
+          "unpaid",
+          "expired"
+        ],
+        "type": "String",
+        "default": "flat",
+        "required": false
+      },
+      "trialStart": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "trialEnd": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "currentPeriodStart": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "currentPeriodEnd": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "gracePeriodEnd": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "nextBillingDate": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "canceledAt": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      }
+    },
+    "SubscriptionItems": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "subscriptionId": {
+        "foreignKey": "Subscription.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "moduleId": {
+        "foreignKey": "Module.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "pricingPlanId": {
+        "foreignKey": "PricingPlan.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "quantity": {
+        "type": "Float",
+        "default": 0,
+        "required": false
+      }
+    },
+    "UsageRecords": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "moduleId": {
+        "foreignKey": "Module.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "quantity": {
+        "type": "Float",
+        "default": 0,
+        "required": false
+      },
+      "periodStart": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "periodEnd": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      }
+    },
+    "Invoices": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "subscriptionId": {
+        "foreignKey": "Subscription.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "amountDue": {
+        "type": "Float",
+        "default": 0,
+        "required": false
+      },
+      "amountPaid": {
+        "type": "Float",
+        "default": 0,
+        "required": false
+      },
+      "amountRemaining": {
+        "type": "Float",
+        "default": 0,
+        "required": false
+      },
+      "status": {
+        "options": [
+          "paid",
+          "pending",
+          "partially_paid",
+          "failed",
+          "canceled"
+        ],
+        "type": "String",
+        "default": "flat",
+        "required": false
+      },
+      "dueDate": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "paidDate": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      }
+    },
+    "InvoiceItems": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "invoiceId": {
+        "foreignKey": "Invoice.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "moduleId": {
+        "foreignKey": "Module.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "subscriptionItemId": {
+        "foreignKey": "SubscriptionItem.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "description": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "pricingType": {
+        "options": [
+          "flat",
+          "per_user",
+          "per_unit",
+          "metered"
+        ],
+        "type": "String",
+        "default": "flat",
+        "required": false
+      },
+      "quantity": {
+        "type": "Float",
+        "default": 0,
+        "required": false
+      },
+      "unitPrice": {
+        "type": "Float",
+        "default": 0,
+        "required": false
+      },
+      "totalPrice": {
+        "type": "Float",
+        "default": 0,
+        "required": false
+      },
+      "currency": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "startPeriod": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "endPeriod": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "metadata": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "AccountCredits": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "paymentId": {
+        "foreignKey": "Payments.id",
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "amount": {
+        "type": "Float",
+        "default": 0,
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    }
+  },
+  "payment": {
+    "Payments": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "provider": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "providerConfig": {
+        "options": [
+          "default",
+          "tenant"
+        ],
+        "type": "String",
+        "default": "default",
+        "required": false
+      },
+      "providerReference": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "providerPaymentId": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "checkoutUrl": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "amount": {
+        "type": "Float",
+        "default": 0,
+        "required": false
+      },
+      "charge": {
+        "type": "Float",
+        "default": null
+      },
+      "currency": {
+        "type": "String",
+        "default": "TZS"
+      },
+      "tillNumber": {
+        "type": "String",
+        "default": null
+      },
+      "txnDate": {
+        "type": "String",
+        "default": null
+      },
+      "txnId": {
+        "type": "String",
+        "default": null
+      },
+      "txnAmount": {
+        "type": "Float",
+        "default": null
+      },
+      "txnPhone": {
+        "type": "String",
+        "default": null
+      },
+      "paymentReference": {
+        "type": "String",
+        "default": null
+      },
+      "channel": {
+        "options": [
+          "vodacom",
+          "tigo",
+          "airtel",
+          "halotel",
+          "ttcl",
+          "zantel",
+          "mobile_money",
+          "card",
+          "bank_transfer",
+          "paypal",
+          "qr",
+          "cash",
+          "manual"
+        ],
+        "type": "String",
+        "default": null
+      },
+      "method": {
+        "options": [
+          "system",
+          "selcom",
+          "clickpesa",
+          "azampay",
+          "flutterwave",
+          "pesapal",
+          "stripe",
+          "paypal",
+          "2checkout",
+          "manual",
+          "cash"
+        ],
+        "type": "String",
+        "default": null
+      },
+      "paymentTagId": {
+        "type": "ID",
+        "default": null
+      },
+      "reference": {
+        "type": "String",
+        "default": null
+      },
+      "transactionData": {
+        "type": "Any",
+        "default": null
+      },
+      "status": {
+        "options": [
+          "PENDING",
+          "SUCCESS",
+          "FAILED",
+          "CANCELED",
+          "REFUNDED"
+        ],
+        "type": "String",
+        "default": null
+      },
+      "paymentMethod": {
+        "options": [
+          "manual",
+          "card",
+          "bank_transfer",
+          "mobile_money",
+          "paypal",
+          "crypto"
+        ],
+        "type": "String",
+        "default": null
+      },
+      "failureReason": {
+        "type": "String",
+        "default": null
+      },
+      "paidAt": {
+        "type": "Date",
+        "default": null
+      },
+      "refundedAt": {
+        "type": "Date",
+        "default": null
+      },
+      "metadata": {
+        "type": "Any",
+        "default": null
+      },
+      "message": {
+        "type": "String",
+        "default": null
+      },
+      "isPaid": {
+        "type": "Boolean",
+        "default": false
+      },
+      "createdBy": {
+        "type": "ID",
+        "default": null
+      },
+      "updatedAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "PaymentProviderRequests": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "paymentId": {
+        "foreignKey": "Payment.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "provider": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "action": {
+        "options": [
+          "createPayment"
+        ],
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "reference": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "providerReference": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "status": {
+        "options": [
+          "succeeded",
+          "failed"
+        ],
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "httpStatus": {
+        "type": "Integer",
+        "default": null,
+        "required": false
+      },
+      "errorCode": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "errorMessage": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "request": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "response": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "durationMs": {
+        "type": "Integer",
+        "default": 0,
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "PaymentAllocations": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "paymentId": {
+        "foreignKey": "Payments.id",
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "invoiceId": {
+        "foreignKey": "Invoice.id",
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "amountAllocated": {
+        "type": "Float",
+        "default": 0,
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    }
+  },
+  "extra": {
+    "Notifications": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "profileId": {
+        "foreignKey": "Profile.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "senderName": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "referenceId": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "referenceName": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "recipient": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "recipientName": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "replyTo": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "title": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "content": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "link": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "attachment": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "trackingCode": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "type": {
+        "options": [
+          "mail",
+          "sms",
+          "push"
+        ],
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "isSeen": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "status": {
+        "options": [
+          "submitted",
+          "waiting",
+          "delivered",
+          "undelivered"
+        ],
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "response": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "responseReference": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "timestamp": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "PushNotifications": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "profileId": {
+        "foreignKey": "Profile.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "deviceId": {
+        "foreignKey": "UserDevice.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "title": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "body": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "iconUrl": {
+        "type": "URL",
+        "default": null,
+        "required": false
+      },
+      "pictureUrl": {
+        "type": "URL",
+        "default": null,
+        "required": false
+      },
+      "payload": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "action": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "actionTargetId": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "isDelivered": {
+        "type": "Boolean",
+        "default": null,
+        "required": false
+      },
+      "status": {
+        "options": [
+          "waiting",
+          "sent",
+          "delivered"
+        ],
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      },
+      "updatedAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "SocketMessages": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "profileId": {
+        "foreignKey": "Profile.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "deviceId": {
+        "foreignKey": "UserDevice.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "namespace": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "action": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "content": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "status": {
+        "options": [
+          "waiting",
+          "sent",
+          "delivered"
+        ],
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      },
+      "updatedAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "AuditTrails": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "profileId": {
+        "foreignKey": "Profile.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "action": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "documentId": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "collection": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "model": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "newValues": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "oldValues": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "ipAddress": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "browser": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "userAgent": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "IpAccessRules": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "ipAddress": {
+        "type": "String",
+        "default": null,
+        "required": true
+      },
+      "type": {
+        "options": [
+          "whitelist",
+          "blacklist"
+        ],
+        "type": "String",
+        "default": "blacklist",
+        "required": false
+      },
+      "reason": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "source": {
+        "options": [
+          "manual",
+          "errorGuard"
+        ],
+        "type": "String",
+        "default": "manual",
+        "required": false
+      },
+      "url": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "method": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "headers": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "body": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "expiresAt": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "Reports": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "foreignKey": "User.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "profileId": {
+        "foreignKey": "Profile.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "name": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "description": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "data": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "isPrivate": {
+        "type": "Boolean",
+        "default": null,
+        "required": false
+      },
+      "isDashboard": {
+        "type": "Boolean",
+        "default": null,
+        "required": false
+      },
+      "sendEmail": {
+        "type": "Boolean",
+        "default": null,
+        "required": false
+      },
+      "emails": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "createdAt": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "ChatGroups": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "profileId": {
+        "foreignKey": "Profile.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "parentReference": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "reference": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "title": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "description": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "members": {
+        "foreignKey": "ChatGroupMember",
+        "type": "{ID}",
+        "default": [],
+        "required": false
+      },
+      "type": {
+        "options": [
+          "private",
+          "public",
+          "general"
+        ],
+        "type": "String",
+        "default": "public",
+        "required": false
+      },
+      "timestamp": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "ChatGroupMembers": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "reference": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userReferenceId": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "name": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "profileUrl": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "isAdmin": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "isOwner": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "timestamp": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "ChatMessages": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "chatGroupId": {
+        "foreignKey": "ChatGroup",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "chatGroupMemberId": {
+        "foreignKey": "ChatGroupMember.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "content": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "media": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "mediaReference": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "type": {
+        "options": [
+          "text",
+          "image",
+          "location",
+          "document",
+          "video",
+          "audio"
+        ],
+        "type": "String",
+        "default": "active",
+        "required": false
+      },
+      "timestamp": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "ChatMessageStates": {
+      "id": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "tenantId": {
+        "foreignKey": "Tenant.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "chatMessageId": {
+        "foreignKey": "ChatMessage.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "chatGroupMemberId": {
+        "foreignKey": "ChatGroupMember.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "sent": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "sentDate": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "received": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "receivedDate": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "opened": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "openedDate": {
+        "type": "Date",
+        "default": null,
+        "required": false
+      },
+      "timestamp": {
+        "type": "Date",
+        "default": "now",
+        "required": false
+      }
+    },
+    "CustomForms": {
+      "id": {
+        "type": "ID"
+      },
+      "tenantId": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "parentCustomFormId": {
+        "foreignKey": "CustomForms.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "entity": {
+        "options": [
+          "order",
+          "customer",
+          "outlet"
+        ],
+        "type": "String"
+      },
+      "position": {
+        "type": "Integer",
+        "default": 0,
+        "required": false
+      },
+      "uniqueKey": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "name": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "label": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "placeholder": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "input": {
+        "options": [
+          "title",
+          "sub-title",
+          "group",
+          "text",
+          "rating",
+          "ranking",
+          "words",
+          "select",
+          "textarea",
+          "switch",
+          "choice",
+          "checkbox",
+          "radio",
+          "colorPicker",
+          "datePicker",
+          "file",
+          "email",
+          "phone",
+          "password",
+          "location"
+        ],
+        "type": "String",
+        "default": "text",
+        "required": false
+      },
+      "type": {
+        "options": [
+          "text",
+          "number",
+          "boolean"
+        ],
+        "type": "String",
+        "default": "text",
+        "required": false
+      },
+      "isMandatory": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "isMultiple": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "isPublicHidden": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "isRandomized": {
+        "type": "Boolean",
+        "default": false
+      },
+      "advancedOptions": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "minimum": {
+        "type": "Integer",
+        "default": null,
+        "required": false
+      },
+      "maximum": {
+        "type": "Integer",
+        "default": null,
+        "required": false
+      },
+      "minimumLabel": {
+        "type": "String",
+        "default": null
+      },
+      "maximumLabel": {
+        "type": "String",
+        "default": null
+      },
+      "imageUrl": {
+        "type": "URL",
+        "default": null
+      },
+      "hasImageUrl": {
+        "type": "Boolean",
+        "default": false
+      },
+      "icon": {
+        "type": "String",
+        "default": null
+      },
+      "timer": {
+        "type": "Number",
+        "default": -1
+      },
+      "correctAnswerId": {
+        "foreignKey": "survey_question_options.id",
+        "type": "ID",
+        "default": false
+      },
+      "isLive": {
+        "type": "Boolean",
+        "default": false
+      },
+      "hideResult": {
+        "type": "Boolean",
+        "default": false
+      },
+      "hasProfanityFilter": {
+        "type": "Boolean",
+        "default": false
+      },
+      "resultsAsPieChart": {
+        "type": "Boolean",
+        "default": false
+      },
+      "showRespondentNames": {
+        "type": "Boolean",
+        "default": false
+      },
+      "mode": {
+        "options": [
+          "star",
+          "emoji"
+        ],
+        "type": "String",
+        "default": null
+      },
+      "reportType": {
+        "options": [
+          "pie",
+          "rating",
+          "ranking",
+          "words"
+        ],
+        "type": "String",
+        "default": "pie"
+      },
+      "descriptionMessage": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "errorMessage": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "widthClass": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "customClass": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "options": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "hasCondition": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "conditions": {
+        "type": "Array",
+        "default": [],
+        "required": false
+      },
+      "status": {
+        "options": [
+          "active",
+          "inactive"
+        ],
+        "type": "String",
+        "default": "active",
+        "required": false
+      },
+      "createdAt": {
+        "type": "Datetime",
+        "default": "now"
+      },
+      "updatedAt": {
+        "type": "Datetime",
+        "default": "now",
+        "required": false
+      }
+    },
+    "CustomFormOptions": {
+      "id": {
+        "type": "ID"
+      },
+      "tenantId": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "customFormId": {
+        "foreignKey": "CustomForms.id",
+        "type": "ID"
+      },
+      "value": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "name": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "label": {
+        "type": "String",
+        "default": null,
+        "required": false
+      },
+      "correctValue": {
+        "type": "Boolean",
+        "default": false
+      },
+      "position": {
+        "type": "Integer",
+        "default": 0,
+        "required": false
+      },
+      "hasCondition": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "conditions": {
+        "type": "Array",
+        "default": [],
+        "required": false
+      },
+      "status": {
+        "options": [
+          "active",
+          "inactive"
+        ],
+        "type": "String",
+        "default": "active"
+      }
+    },
+    "EnabledCustomForms": {
+      "id": {
+        "type": "ID"
+      },
+      "tenantId": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "customFormId": {
+        "foreignKey": "CustomForms.id",
+        "type": "ID"
+      },
+      "isPublicHidden": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "isMandatory": {
+        "type": "Boolean",
+        "default": false,
+        "required": false
+      },
+      "position": {
+        "type": "Integer",
+        "default": 0,
+        "required": false
+      },
+      "createdAt": {
+        "type": "Datetime",
+        "default": "now"
+      }
+    },
+    "CustomFormSubmissions": {
+      "id": {
+        "type": "ID"
+      },
+      "tenantId": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "createdAt": {
+        "type": "Datetime",
+        "default": "now"
+      },
+      "updatedAt": {
+        "type": "Datetime",
+        "default": "now",
+        "required": false
+      }
+    },
+    "CustomFormValues": {
+      "id": {
+        "type": "ID"
+      },
+      "tenantId": {
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "userId": {
+        "type": "ID",
+        "default": null
+      },
+      "customFormSubmissionId": {
+        "foreignKey": "CustomFormSubmissions.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "customFormId": {
+        "foreignKey": "CustomForms.id",
+        "type": "ID"
+      },
+      "customFormOptionId": {
+        "foreignKey": "CustomFormOptions.id",
+        "type": "ID",
+        "default": null,
+        "required": false
+      },
+      "value": {
+        "type": "Any",
+        "default": null,
+        "required": false
+      },
+      "isAnonymous": {
+        "type": "Boolean",
+        "default": false
+      },
+      "correct": {
+        "type": "Boolean",
+        "default": false
+      },
+      "time": {
+        "type": "Number",
+        "default": null
+      },
+      "createdAt": {
+        "type": "Datetime",
+        "default": "now"
+      }
+    }
+  }
+}
