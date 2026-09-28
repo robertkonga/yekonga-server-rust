@@ -785,7 +785,21 @@ impl Yekonga {
             .and(NotForContentType::IMAGES)
             .and(NotForContentType::const_new("text/event-stream"));
 
+        let socket_app = self.clone();
+        let socket_path = self.append_base_url("/yekonga.io");
+        let socket_handler = move || {
+            let socket_app = socket_app.clone();
+            axum::routing::get(
+                move |ws: axum::extract::ws::WebSocketUpgrade, parts: http::request::Parts| {
+                    let app = socket_app.clone();
+                    async move { crate::socket::upgrade(app, ws, &parts).await }
+                },
+            )
+        };
+
         axum::Router::new()
+            .route(&socket_path, socket_handler())
+            .route(&format!("{socket_path}/"), socket_handler())
             .fallback(move |request: http::Request<Body>| {
                 let app = app.clone();
                 let peer = request

@@ -6,10 +6,10 @@ behavior, including its route patterns, middleware order, error responses
 and access tokens.
 
 The port is being done in steps. Step 1 (the foundation), step 2 (the query
-builder and all four database backends) and step 3 (GraphQL, REST and the
-auth endpoints) are done. Step 4 is under way: cloud functions, database and
-auth triggers, the audit trail, cron jobs and the tenant-fetch fallback are
-done; the WebSocket server and socket change events are next.
+builder and all four database backends), step 3 (GraphQL, REST and the auth
+endpoints) and step 4 (cloud functions, triggers, the audit trail, cron jobs,
+the WebSocket server and socket change events) are done. Step 5 (gateways,
+mail, uploads, rate limiting, the error guard and TLS) is next.
 
 ## Status
 
@@ -47,8 +47,10 @@ done; the WebSocket server and socket change events are next.
 | Audit trail (`auditTrail.enabled`, buffered per request, flushed to `AuditTrail`) | ✅ |
 | Cron jobs (`register_cronjob`, `register_cronjob_at`) | ✅ run when `hasCronjob` and the server is started |
 | `FetchTenantByDomain` fallback on tenant-catch servers | ✅ |
-| WebSocket / Socket.IO server and database change events | ⏳ step 4b |
+| WebSocket server (`/yekonga.io/`): namespaces, rooms, broadcast/to-room/to-client, `subscribe`/`unsubscribe`/`acknowledge`/`graphql-request` | ✅ |
+| Database change events pushed to a tenant's socket clients | ✅ |
 | SMS / WhatsApp / payment gateways, mail, uploads, rate limit, error guard, TLS | ⏳ step 5 |
+| WebSocket JS SDK (`/yekonga.io/yekonga.io.js`) | ⏳ the embedded client script isn't ported |
 
 A tenant id set by a preload middleware (`req.set_tenant_id(...)`) is kept
 when the domain lookup finds no tenant.
@@ -163,8 +165,10 @@ everything that runs after it.
   Go says `In field "title": Expected "String!", found null.`
 - Relation fields are resolved one query at a time. Go batches them on
   MongoDB; the results are the same.
-- Socket change events are emitted but reach no clients yet: the WebSocket
-  server is step 4b.
+- The WebSocket endpoint is `/yekonga.io/`; the namespace is chosen with
+  `?ns=`. The `graphql-request` socket event runs without a request, so
+  tenant scoping isn't applied to it. Go runs it as the connection's request.
+  The embedded JavaScript client (`/yekonga.io/yekonga.io.js`) isn't served.
 - Database triggers run around every read and write, before and after, unless
   the query is marked `skip_before_commit`. Go runs `after` triggers even on
   `skipBeforeCommit` queries (including its own internal writes); the port

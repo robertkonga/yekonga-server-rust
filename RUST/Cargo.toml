@@ -16,7 +16,7 @@ mysql = ["dep:mysql_async"]
 
 [dependencies]
 async-graphql = { version = "7", default-features = false, features = ["dynamic-schema"] }
-axum = { version = "0.8", default-features = false, features = ["http1", "http2", "tokio"] }
+axum = { version = "0.8", default-features = false, features = ["http1", "http2", "tokio", "ws"] }
 base64 = "0.22"
 bcrypt = "0.19"
 bytes = "1"
@@ -44,3 +44,4 @@ tracing = "0.1"
 http-body-util = "0.1"
 tempfile = "3"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio-tungstenite = "0.24"
