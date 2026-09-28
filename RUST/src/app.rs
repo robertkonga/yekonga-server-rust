@@ -170,6 +170,7 @@ struct Inner {
     token_paths: OnceLock<TokenPaths>,
     backend: Arc<dyn Backend>,
     caches: LookupCaches,
+    graphql_schema: OnceLock<std::result::Result<async_graphql::dynamic::Schema, String>>,
 }
 
 impl Yekonga {
@@ -214,6 +215,7 @@ impl Yekonga {
             when_ready: std::sync::Mutex::default(),
             token_paths: OnceLock::new(),
             caches: LookupCaches::new(&config),
+            graphql_schema: OnceLock::new(),
             backend,
             config,
         }));
@@ -257,6 +259,12 @@ impl Yekonga {
             .backend
             .ensure_indexes(self.0.models.values().map(|m| m.as_ref()).collect())
             .await
+    }
+
+    pub(crate) fn schema_cell(
+        &self,
+    ) -> &OnceLock<std::result::Result<async_graphql::dynamic::Schema, String>> {
+        &self.0.graphql_schema
     }
 
     pub(crate) fn caches(&self) -> &LookupCaches {
@@ -638,6 +646,9 @@ impl Yekonga {
                 id
             });
         });
+
+        crate::rest::register_graphql_route(self);
+        crate::rest::register_rest_routes(self);
 
         for public in &self.0.config.public {
             match self.resolve_public_directory(public) {

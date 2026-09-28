@@ -219,3 +219,128 @@ fn models_match_go() {
         mismatches.join("\n")
     );
 }
+
+/// The auto-generated GraphQL schema, flattened to sorted lines (type,
+/// field with argument types, input field, enum value), as the fixtures
+/// were recorded from the Go server's introspection output.
+fn normalized_schema(introspection: &Value) -> String {
+    fn type_name(t: &Value) -> String {
+        match t["kind"].as_str() {
+            Some("NON_NULL") => format!("{}!", type_name(&t["ofType"])),
+            Some("LIST") => format!("[{}]", type_name(&t["ofType"])),
+            _ => t["name"].as_str().unwrap_or("?").to_string(),
+        }
+    }
+
+    let mut lines = Vec::new();
+    for ty in introspection["data"]["__schema"]["types"]
+        .as_array()
+        .unwrap()
+    {
+        let name = ty["name"].as_str().unwrap();
+        if name.starts_with("__") {
+            continue;
+        }
+        lines.push(format!("{} {name}", ty["kind"].as_str().unwrap()));
+
+        for field in ty["fields"].as_array().into_iter().flatten() {
+            let mut args: Vec<String> = field["args"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|a| format!("{}:{}", a["name"].as_str().unwrap(), type_name(&a["type"])))
+                .collect();
+            args.sort();
+            lines.push(format!(
+                "  {name}.{}({}): {}",
+                field["name"].as_str().unwrap(),
+                args.join(","),
+                type_name(&field["type"])
+            ));
+        }
+        for field in ty["inputFields"].as_array().into_iter().flatten() {
+            lines.push(format!(
+                "  {name}.{}: {}",
+                field["name"].as_str().unwrap(),
+                type_name(&field["type"])
+            ));
+        }
+        for value in ty["enumValues"].as_array().into_iter().flatten() {
+            lines.push(format!("  {name} = {}", value["name"].as_str().unwrap()));
+        }
+    }
+
+    lines.sort();
+    lines.join("\n")
+}
+
+async fn introspect(config: Value) -> String {
+    use yekonga::{DatabaseStructure, LocalBackend, Yekonga, YekongaConfig};
+
+    let config: YekongaConfig = serde_json::from_value(config).unwrap();
+    let structure = DatabaseStructure::from_value(
+        &serde_json::from_str(include_str!("fixtures/database.json")).unwrap(),
+    );
+    let app = Yekonga::with_backend(
+        config,
+        structure,
+        std::sync::Arc::new(LocalBackend::in_memory()),
+    );
+
+    let result = app
+        .graphql(
+            include_str!("fixtures/introspection.graphql"),
+            serde_json::json!({}),
+            "",
+            None,
+        )
+        .await;
+    assert!(result.get("errors").is_none(), "{result}");
+    normalized_schema(&result)
+}
+
+#[tokio::test]
+async fn graphql_schema_matches_go() {
+    let rust = introspect(serde_json::json!({})).await;
+    let go = include_str!("fixtures/go_graphql_schema.txt").trim_end();
+
+    if rust != go {
+        let missing: Vec<&str> = go
+            .lines()
+            .filter(|l| !rust.lines().any(|r| r == *l))
+            .take(20)
+            .collect();
+        let extra: Vec<&str> = rust
+            .lines()
+            .filter(|l| !go.lines().any(|g| g == *l))
+            .take(20)
+            .collect();
+        panic!(
+            "schema differs from Go\nonly in Go:\n{}\nonly in Rust:\n{}",
+            missing.join("\n"),
+            extra.join("\n")
+        );
+    }
+}
+
+#[tokio::test]
+async fn graphql_schema_matches_go_with_every_module() {
+    use sha2::{Digest, Sha256};
+
+    let rust = introspect(serde_json::json!({
+        "isAuthorizationServer": true, "hasTenant": true, "hasTenantBilling": true,
+        "hasTenantCatch": true, "hasPaymentModule": true
+    }))
+    .await;
+
+    let hash: String = Sha256::digest(format!("{rust}\n"))
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect();
+    assert_eq!(
+        hash,
+        include_str!("fixtures/go_graphql_schema_full.sha256").trim(),
+        "{} lines",
+        rust.lines().count()
+    );
+}

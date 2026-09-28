@@ -314,6 +314,108 @@ impl ModelQuery {
         Ok(stored.into_iter().map(|r| self.decorate(r)).collect())
     }
 
+    /// Creates or updates many records (Go's `Import`). A record is updated
+    /// when one already exists with the same values for `unique_keys` (or the
+    /// same `id`); otherwise it's created. Returns `{message, status, deleted,
+    /// ignored, imported, updated, data}` as the Go server does.
+    pub async fn import(
+        &self,
+        data: Vec<Value>,
+        unique_keys: &[String],
+    ) -> Result<DataMap, DbError> {
+        let mut keys: Vec<String> = unique_keys.to_vec();
+        keys.push("_id".into());
+
+        let (mut creates, mut updates) = (Vec::new(), Vec::new());
+        for item in data {
+            let Value::Object(item) = item else { continue };
+            if item.is_empty() {
+                continue;
+            }
+
+            let mut where_ = DataMap::new();
+            for key in &keys {
+                let value = match key.as_str() {
+                    "_id" | "id" => item
+                        .get("_id")
+                        .filter(|v| !is_empty(v))
+                        .or_else(|| item.get("id")),
+                    _ => item.get(key),
+                };
+                if let Some(value) = value.filter(|v| !is_empty(v)) {
+                    let key = if key == "_id" { "id" } else { key.as_str() };
+                    where_.insert(key.to_string(), value.clone());
+                }
+            }
+
+            let existing = if where_.is_empty() {
+                None
+            } else {
+                self.fresh()
+                    .where_many(Value::Object(where_))
+                    .find_one()
+                    .await?
+            };
+
+            match existing {
+                Some(existing) => updates.push((existing["_id"].clone(), item)),
+                None => creates.push(Value::Object(item)),
+            }
+        }
+
+        let (mut status, mut ignored, mut updated) = (false, 0, 0);
+        let mut saved: Vec<Value> = Vec::new();
+
+        let imported = if creates.is_empty() {
+            0
+        } else {
+            let created = self.create_many(creates).await?;
+            status = true;
+            saved.extend(created.iter().cloned().map(Value::Object));
+            created.len()
+        };
+
+        for (id, item) in updates {
+            match self
+                .fresh()
+                .where_("id", id)
+                .update(Value::Object(item))
+                .await?
+            {
+                Some(record) => {
+                    updated += 1;
+                    status = true;
+                    saved.push(Value::Object(record));
+                }
+                None => ignored += 1,
+            }
+        }
+
+        let result = json!({
+            "message": if status { "SUCCESS" } else { "FAIL" },
+            "status": status,
+            "deleted": 0,
+            "ignored": ignored,
+            "imported": imported,
+            "updated": updated,
+            "data": saved,
+        });
+        Ok(result.as_object().cloned().unwrap_or_default())
+    }
+
+    /// A new query on the same model, with the same request and flags but no
+    /// conditions (Go's `NewInstance`).
+    fn fresh(&self) -> ModelQuery {
+        ModelQuery {
+            where_: DataMap::new(),
+            order_by: Vec::new(),
+            limit: 0,
+            page: 0,
+            skip: 0,
+            ..self.clone()
+        }
+    }
+
     /// Sets the given fields on the first matching record (in sort order) and
     /// returns it as updated, or `None` if nothing matched.
     pub async fn update(&self, data: impl Into<Value>) -> Result<Option<DataMap>, DbError> {

@@ -15,6 +15,7 @@ mongodb = ["dep:mongodb"]
 mysql = ["dep:mysql_async"]
 
 [dependencies]
+async-graphql = { version = "7", default-features = false, features = ["dynamic-schema"] }
 axum = { version = "0.8", default-features = false, features = ["http1", "http2", "tokio"] }
 base64 = "0.22"
 bytes = "1"
