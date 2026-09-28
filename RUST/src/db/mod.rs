@@ -9,6 +9,8 @@ pub mod filter;
 mod local;
 #[cfg(feature = "mongodb")]
 pub mod mongo;
+#[cfg(feature = "mysql")]
+pub mod sql;
 pub mod values;
 
 use std::future::Future;
@@ -21,8 +23,10 @@ pub use filter::{Cond, Filter, Operand};
 pub use local::LocalBackend;
 #[cfg(feature = "mongodb")]
 pub use mongo::MongoBackend;
+#[cfg(feature = "mysql")]
+pub use sql::SqlBackend;
 
-use crate::model::DataModel;
+use crate::model::{DataModel, TENANT_ID_KEY};
 
 pub type DataMap = Map<String, Value>;
 pub type DbFuture<'a, T> = Pin<Box<dyn Future<Output = Result<T, DbError>> + Send + 'a>>;
@@ -98,6 +102,9 @@ impl Query {
 /// Storage for records. Records are JSON objects keyed by a string `_id`;
 /// dates are RFC 3339 strings and ids 24-hex-digit strings.
 pub trait Backend: Send + Sync + 'static {
+    /// The `database.kind` this backend serves (`"local"`, `"mongodb"`, `"mysql"`).
+    fn kind(&self) -> &str;
+
     /// Matching records, sorted, skipped and limited.
     fn find<'a>(&'a self, query: &'a Query) -> DbFuture<'a, Vec<DataMap>>;
 
@@ -136,6 +143,29 @@ pub trait Backend: Send + Sync + 'static {
     }
 }
 
+/// `(field, unique)` for each single-field index a model's queries rely on,
+/// sorted by field: every `unique` field (as a unique index), and fields
+/// marked `index`, `tenantId` and foreign keys. `_id` is always indexed.
+pub fn model_indexes(model: &DataModel) -> Vec<(String, bool)> {
+    let mut indexes: Vec<(String, bool)> = model
+        .fields
+        .iter()
+        .filter(|(name, field)| *name != "id" && *name != "_id" && !field.primary_key)
+        .filter_map(|(name, field)| {
+            if field.unique {
+                Some((name.clone(), true))
+            } else if field.index || name == TENANT_ID_KEY || field.foreign_key.is_some() {
+                Some((name.clone(), false))
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    indexes.sort();
+    indexes
+}
+
 /// Stands in for a backend that isn't ported yet: every call fails.
 pub struct UnsupportedBackend(pub String);
 
@@ -147,6 +177,9 @@ impl UnsupportedBackend {
 }
 
 impl Backend for UnsupportedBackend {
+    fn kind(&self) -> &str {
+        &self.0
+    }
     fn find<'a>(&'a self, _: &'a Query) -> DbFuture<'a, Vec<DataMap>> {
         self.fail()
     }

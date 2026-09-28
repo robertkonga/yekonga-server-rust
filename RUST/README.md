@@ -6,7 +6,7 @@ behavior, including its route patterns, middleware order, error responses
 and access tokens.
 
 The port is being done in steps. Steps 1 (the foundation) and 2 (the query
-builder, local database and MongoDB) are done.
+builder and all four database backends) are done.
 
 ## Status
 
@@ -26,7 +26,7 @@ builder, local database and MongoDB) are done.
 | Tenant lookup by domain (with TenantConfig), TenantCatch, user lookup on authorization servers, lookup caches | ✅ |
 | Tenant scoping of queries made with a request | ✅ |
 | MongoDB (`database.kind: "mongodb"`), including startup indexes | ✅ shares a database with the Go server (see below) |
-| MySQL / SQL backends | ⏳ next; queries fail with "not supported yet" until then |
+| MySQL (`database.kind: "mysql"` or `"sql"`), with table/column migration and indexes | ✅ shares a database with the Go server (see below) |
 | REST API (`restAPI`) and auto-generated GraphQL | ⏳ step 3 |
 | Auth endpoints (`/me`, `/logout`, `/refresh`, login/OTP) | ⏳ step 3 |
 | Cloud functions, DB triggers, cron jobs, WebSocket / Socket.IO | ⏳ step 4 |
@@ -124,30 +124,45 @@ everything that runs after it.
   `_id` without `id` ends up stored as `"id": null` next to a new `_id`.
 - Sort fields apply in the order given. Go keeps them in a map, so their
   priority is random.
+- On MySQL, list fields such as `[String]` (stored as JSON text, as in Go)
+  are filtered by element like `Array` fields, as MongoDB does. Go's SQL
+  backend compares the whole JSON text, so `tags = "x"` never matches there.
+  String comparisons on MySQL follow the column's collation, which ignores
+  case and accents by default. This is the same in Go.
 - Database triggers, the audit trail and socket change events are not run
   yet (step 4).
 - The client IP falls back to the connection's address when there is no
   `X-Forwarded-For` or `X-Real-Ip` header.
 
-## Sharing a MongoDB database with the Go server
+## Sharing a database with the Go server
 
-The MongoDB backend stores records in the same shape as the Go server:
-- the same collection names
-- ObjectIds for `_id`, `tenantId` and ID fields
-- BSON dates for Date fields
-- numbers for Number and Float fields
+The MongoDB and MySQL backends store records in the same shape as the Go
+server, so both servers can use one database.
 
-This was checked against MongoDB 7. The Go server wrote 4 orders and the
-Rust port wrote 4 more into the same collection. Both then ran the same 13
-queries (plain values, `in`/`notIn`/`all`, `exists`, `OR`, number and date
-comparisons, a relation filter) and the aggregates over all 8 records, and
-the results were identical.
+On MongoDB they use the same collection names, ObjectIds for `_id`,
+`tenantId` and ID fields, BSON dates for Date fields, and numbers for Number
+and Float fields.
+
+On MySQL they use the same tables and column types (`_id VARCHAR(64)`
+primary key, `DATETIME(3)` dates, `JSON` for Object/Any/Array), the same
+index names, and filters with MongoDB's meaning for missing values. Tables
+and missing columns are created on first use unless
+`database.disableAutoMigrate` is set. Existing columns are never changed.
+
+This was checked against MongoDB 7 and against MySQL 8.4. On each, the Go
+server wrote 4 orders and the Rust port wrote 4 more into the same
+collection or table. Both then ran the same 13 queries (plain values,
+`in`/`notIn`/`all`, `exists`, `OR`, number and date comparisons, a relation
+filter) and the aggregates over all 8 records, and the results were
+identical.
 
 ## Development
 
 ```bash
 cargo test                      # unit, HTTP pipeline and Go-parity tests
-YEKONGA_TEST_MONGO_PORT=27017 cargo test   # also run the query tests on MongoDB (drops yekonga_rust_test_* databases)
+# Also run the query tests on MongoDB and/or MySQL (throwaway servers:
+# they drop and recreate yekonga_rust_test_* databases).
+YEKONGA_TEST_MONGO_PORT=27017 YEKONGA_TEST_MYSQL_PORT=3306 cargo test
 cargo clippy --all-targets
 cargo fmt --check
 ```

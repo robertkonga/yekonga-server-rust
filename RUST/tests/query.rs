@@ -31,10 +31,15 @@ fn schema() -> DatabaseStructure {
     }))
 }
 
-/// A fresh app per backend: the in-memory local backend, plus MongoDB when
-/// `YEKONGA_TEST_MONGO_PORT` points at a throwaway server (each test uses,
-/// and first drops, its own database).
-#[cfg_attr(not(feature = "mongodb"), allow(unused_mut, unused_variables))]
+/// A fresh app per backend: the in-memory local backend, plus MongoDB and
+/// MySQL when `YEKONGA_TEST_MONGO_PORT` / `YEKONGA_TEST_MYSQL_PORT` point at
+/// throwaway servers (each test uses, and first drops, its own database;
+/// MySQL connects as `YEKONGA_TEST_MYSQL_USER`, default root, with
+/// `YEKONGA_TEST_MYSQL_PASSWORD`, default empty).
+#[cfg_attr(
+    not(all(feature = "mongodb", feature = "mysql")),
+    allow(unused_mut, unused_variables)
+)]
 async fn apps(test: &str, config: Value) -> Vec<Yekonga> {
     let config: YekongaConfig = serde_json::from_value(config).unwrap();
     let mut apps = vec![Yekonga::with_backend(
@@ -62,9 +67,47 @@ async fn apps(test: &str, config: Value) -> Vec<Yekonga> {
             .unwrap();
 
         apps.push(Yekonga::with_backend(
-            config,
+            config.clone(),
             schema(),
             Arc::new(MongoBackend::new(database)),
+        ));
+    }
+
+    #[cfg(feature = "mysql")]
+    if let Ok(port) = std::env::var("YEKONGA_TEST_MYSQL_PORT") {
+        use yekonga::db::sql::mysql_async::{self, prelude::Queryable};
+        use yekonga::db::sql::SqlBackend;
+
+        let mut database = config.database.clone();
+        database.host = "127.0.0.1".into();
+        database.port = port.clone();
+        database.username = std::env::var("YEKONGA_TEST_MYSQL_USER")
+            .unwrap_or_else(|_| "root".into())
+            .into();
+        database.password = std::env::var("YEKONGA_TEST_MYSQL_PASSWORD")
+            .unwrap_or_default()
+            .into();
+        database.database_name = format!("yekonga_rust_test_{test}");
+
+        let admin = mysql_async::OptsBuilder::default()
+            .ip_or_hostname("127.0.0.1")
+            .tcp_port(port.parse().unwrap())
+            .user(database.username.as_str())
+            .pass(database.password.as_str());
+        let mut conn = mysql_async::Conn::new(admin).await.unwrap();
+        let name = &database.database_name;
+        conn.query_drop(format!("DROP DATABASE IF EXISTS `{name}`"))
+            .await
+            .unwrap();
+        conn.query_drop(format!("CREATE DATABASE `{name}`"))
+            .await
+            .unwrap();
+        conn.disconnect().await.unwrap();
+
+        apps.push(Yekonga::with_backend(
+            config,
+            schema(),
+            Arc::new(SqlBackend::new(database)),
         ));
     }
 
@@ -699,5 +742,29 @@ async fn authorization_server_loads_the_user() {
     .await
     {
         authorization_server_loads_the_user_body(app).await;
+    }
+}
+
+#[test]
+fn config_selects_the_backend() {
+    let kind = |kind: &str| {
+        let config: YekongaConfig = serde_json::from_value(
+            json!({"appName": "backend-selection-test", "database": {"kind": kind}}),
+        )
+        .unwrap();
+        Yekonga::new(config, DatabaseStructure::default())
+            .backend()
+            .kind()
+            .to_string()
+    };
+
+    assert_eq!(kind(""), "local", "local is the default");
+    assert_eq!(kind("local"), "local");
+    #[cfg(feature = "mongodb")]
+    assert_eq!(kind("mongodb"), "mongodb");
+    #[cfg(feature = "mysql")]
+    {
+        assert_eq!(kind("mysql"), "mysql");
+        assert_eq!(kind("sql"), "mysql");
     }
 }
