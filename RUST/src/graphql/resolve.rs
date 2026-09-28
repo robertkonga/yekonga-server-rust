@@ -145,7 +145,7 @@ pub(crate) fn output_value(
 }
 
 /// The field's arguments as JSON (enum values become their names).
-fn args(ctx: &ResolverContext<'_>) -> Map<String, Value> {
+pub(crate) fn args(ctx: &ResolverContext<'_>) -> Map<String, Value> {
     ctx.args
         .as_index_map()
         .iter()

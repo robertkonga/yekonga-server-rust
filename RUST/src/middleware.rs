@@ -197,8 +197,10 @@ pub async fn tenant_catch(req: &Request) -> MiddlewareResult {
             });
             req.set_context(keys::CURRENT_TENANT_CONFIG, Value::Object(tenant_config));
         }
-    } else if let Some(record) = app.tenant_catch_by_domain(&host).await {
-        tenant_id = record.get("tenantId").cloned().filter(|v| !is_empty(v));
+    } else if config.has_tenant_catch {
+        if let Some(result) = app.fetch_tenant_by_domain(&host, req).await {
+            tenant_id = result.get("tenantId").cloned().filter(|v| !is_empty(v));
+        }
     }
 
     let tenant_id = tenant_id.or_else(|| req.tenant_id());

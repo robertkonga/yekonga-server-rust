@@ -6,8 +6,10 @@ behavior, including its route patterns, middleware order, error responses
 and access tokens.
 
 The port is being done in steps. Step 1 (the foundation), step 2 (the query
-builder and all four database backends) and most of step 3 (GraphQL and
-REST) are done.
+builder and all four database backends), step 3 (GraphQL, REST and the auth
+endpoints) and step 4 (cloud functions, triggers, the audit trail, cron jobs,
+the WebSocket server and socket change events) are done. Step 5 (gateways,
+mail, uploads, rate limiting, the error guard and TLS) is next.
 
 ## Status
 
@@ -33,10 +35,22 @@ REST) are done.
 | GraphQL mutations: create (with nested children), update, delete, import | ✅ |
 | REST API (`restApiEnabled`, `/api/:model…`) | ✅ |
 | GraphQL `groupBy`/`distinct`, summary `graph`, `download…`, `…Action`, custom fields | ⏳ return "not supported by the Rust port yet" |
-| Auth GraphQL schema (`graphql.apiAuthRoute`) and auth endpoints | ⏳ step 3 |
-| Auth endpoints (`/me`, `/logout`, `/refresh`, login/OTP) | ⏳ step 3 |
-| Cloud functions, DB triggers, cron jobs, WebSocket / Socket.IO | ⏳ step 4 |
+| Auth GraphQL schema (`graphql.apiAuthRoute`), on authorization servers | ✅ identical to Go's, with and without `secureAuthentication` (see below) |
+| Auth GraphQL: `otp`, `login` (password/OTP), `refreshToken`, `profile`, `register`, `tenantAvailability` | ✅ |
+| Auth endpoints `/me`, `/logout`, `/refresh` (with optional `/:moduleName`) | ✅ |
+| Access & refresh tokens (bcrypt passwords, hashed refresh tokens, auth cookies), user permissions | ✅ |
+| Auth GraphQL: `socialLogin`, `contactOTP`, `contactVerify`, `resetPassword`, `confirmToken`, `changePassword`, `switchAccount` | ⏳ return "not supported by the Rust port yet" |
+| OTP delivery (SMS / WhatsApp / mail gateways) | ⏳ codes are stored; a hook (`set_otp_sender`) delivers them until step 5 |
+| Cloud functions (`define`/`run`) | ✅ |
+| Database triggers (before/after find/create/update/delete, per model or `*_all`) | ✅ |
+| Auth triggers (before/after login, OTP, register) | ✅ |
+| Audit trail (`auditTrail.enabled`, buffered per request, flushed to `AuditTrail`) | ✅ |
+| Cron jobs (`register_cronjob`, `register_cronjob_at`) | ✅ run when `hasCronjob` and the server is started |
+| `FetchTenantByDomain` fallback on tenant-catch servers | ✅ |
+| WebSocket server (`/yekonga.io/`): namespaces, rooms, broadcast/to-room/to-client, `subscribe`/`unsubscribe`/`acknowledge`/`graphql-request` | ✅ |
+| Database change events pushed to a tenant's socket clients | ✅ |
 | SMS / WhatsApp / payment gateways, mail, uploads, rate limit, error guard, TLS | ⏳ step 5 |
+| WebSocket JS SDK (`/yekonga.io/yekonga.io.js`) | ⏳ the embedded client script isn't ported |
 
 A tenant id set by a preload middleware (`req.set_tenant_id(...)`) is kept
 when the domain lookup finds no tenant.
@@ -151,10 +165,43 @@ everything that runs after it.
   Go says `In field "title": Expected "String!", found null.`
 - Relation fields are resolved one query at a time. Go batches them on
   MongoDB; the results are the same.
-- Database triggers, the audit trail and socket change events are not run
-  yet (step 4).
+- The WebSocket endpoint is `/yekonga.io/`; the namespace is chosen with
+  `?ns=`. The `graphql-request` socket event runs without a request, so
+  tenant scoping isn't applied to it. Go runs it as the connection's request.
+  The embedded JavaScript client (`/yekonga.io/yekonga.io.js`) isn't served.
+- Database triggers run around every read and write, before and after, unless
+  the query is marked `skip_before_commit`. Go runs `after` triggers even on
+  `skipBeforeCommit` queries (including its own internal writes); the port
+  skips both `before` and `after` triggers there, so internal framework
+  writes never fire triggers.
+- `before`/`after` create triggers run once per record. Go's `Import` runs
+  them once on the whole list, while its `Create` runs them per record; the
+  port is consistent and always per record.
+- The audit trail records the same fields Go does (action, model, document
+  id, old and new values, tenant/profile/user and client details) and is
+  flushed to the `AuditTrail` collection in the background once the request
+  ends. The document id comes from the record's `_id`/`id`. Go reads it from
+  the model's primary field, which for most models is a display field, not
+  the id.
 - The client IP falls back to the connection's address when there is no
   `X-Forwarded-For` or `X-Real-Ip` header.
+- **Login checks the password.** Go's `AttemptLogin` treats the literal
+  password `"true"` as a match for every account (`main_function.go`), so
+  anyone can sign in as anyone. The Rust port only accepts the account's
+  bcrypt password or the configured `globalPassword`. Go's `$2a$` hashes
+  verify unchanged.
+- OTP codes and refresh tokens use the operating system's random generator.
+  Go builds them from `math/rand` seeded with the clock (`GetRandomString`),
+  so its codes and tokens are predictable.
+- OTP codes are not delivered on their own: the SMS, WhatsApp and mail
+  gateways are step 5. A code is stored and, if a sender is registered with
+  `Yekonga::set_otp_sender`, handed to it; otherwise a warning is logged.
+- Auth mutations that only look a user up in Go (`socialLogin`,
+  `contactOTP`, `contactVerify`, `resetPassword`, `confirmToken`,
+  `changePassword`, `switchAccount`) return "not supported by the Rust port
+  yet" instead.
+- `getUserPermission` guards against a missing `Tenant` model. Go panics
+  when it isn't in the schema.
 
 ## GraphQL compatibility
 
@@ -163,6 +210,13 @@ the Go server. `tests/go_parity.rs` compares it against Go's introspection
 output (`tests/fixtures/go_graphql_schema.txt`: 533 types, 6,512 lines), and
 against a hash of the schema with every module enabled (1,294 types). Both
 match exactly.
+
+The auth schema (`graphql.apiAuthRoute`, on authorization servers) is
+compared the same way, both with and without `secureAuthentication`
+(`tests/fixtures/go_auth_schema*.txt`); `login` and `refreshToken` return a
+`CredentialToken` with it and a `Profile` without it, as in Go. The only
+difference is the GraphQL library's built-in `Float` scalar, which no auth
+field uses and Go leaves out.
 
 The resolvers were checked the same way, with both servers on one MongoDB
 database. 19 queries covered filters, sorting, paging, relations in both

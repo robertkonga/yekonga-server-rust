@@ -1,0 +1,150 @@
+  ActionResponse.data(): Any
+  ActionResponse.message(): String
+  ActionResponse.status(): Boolean
+  ChangePasswordInput.password: String
+  ChangePasswordInput.passwordConfirmation: String
+  ChangePasswordInput.token: String
+  ConcatOtpInput.email: String
+  ConcatOtpInput.phone: String
+  ConcatOtpInput.userId: String
+  ConcatOtpInput.whatsapp: String
+  ConfirmTokenInput.token: String
+  ConfirmTokenResponse.email(): String
+  ConfirmTokenResponse.status(): Boolean
+  ConfirmTokenResponse.token(): String
+  ContactVerifyInput.email: String
+  ContactVerifyInput.password: String
+  ContactVerifyInput.phone: String
+  ContactVerifyInput.type: String
+  ContactVerifyInput.userId: String
+  ContactVerifyInput.whatsapp: String
+  CredentialToken.accessToken(): ID
+  CredentialToken.refreshToken(): String
+  LoginInput.moduleName: String
+  LoginInput.password: String
+  LoginInput.rememberMe: Boolean
+  LoginInput.type: LoginTypeEnum
+  LoginInput.username: String
+  LoginInput.usernameType: UsernameIdentifier
+  LoginTypeEnum = NORMAL
+  LoginTypeEnum = OTP
+  LoginTypeEnum = PASSWORD
+  LoginTypeEnum = REGISTRATION
+  Mutation.changePassword(input:ChangePasswordInput): ActionResponse
+  Mutation.confirmToken(input:ConfirmTokenInput): ConfirmTokenResponse
+  Mutation.contactOTP(input:ConcatOtpInput,type:UsernameIdentifier): ActionResponse
+  Mutation.contactVerify(input:ContactVerifyInput,type:UsernameIdentifier): ActionResponse
+  Mutation.login(input:LoginInput,moduleName:String,type:UsernameIdentifier): CredentialToken
+  Mutation.otp(input:OtpInput,type:UsernameIdentifier): ActionResponse
+  Mutation.register(input:RegistrationInput): ActionResponse
+  Mutation.resetPassword(input:ResetPasswordInput): ActionResponse
+  Mutation.socialLogin(input:SocialLoginInput): Profile
+  Mutation.switchAccount(profileId:String,token:String,userId:String): Profile
+  OrganizationTypeEnum = COMPANY
+  OrganizationTypeEnum = NGO
+  OrganizationTypeEnum = PRIVATE
+  OtpInput.username: String
+  OtpInput.usernameType: UsernameIdentifier
+  Profile.countryId(): String
+  Profile.createdAt(): Date
+  Profile.dateOfBirth(): Date
+  Profile.deletedAt(): Date
+  Profile.deviceToken(): String
+  Profile.districtId(): String
+  Profile.email(): String
+  Profile.emailVerifiedAt(): Date
+  Profile.emailVerifyCode(): Boolean
+  Profile.firstName(): String
+  Profile.gender(): String
+  Profile.googleToken(): String
+  Profile.id(): ID
+  Profile.isActive(): Boolean
+  Profile.isAdmin(): Boolean
+  Profile.isBanned(): Boolean
+  Profile.isEmailVerified(): Boolean
+  Profile.isManager(): Boolean
+  Profile.isPhoneVerified(): Boolean
+  Profile.isWhatsappVerified(): Boolean
+  Profile.lastActive(): Date
+  Profile.lastName(): String
+  Profile.owner(): Boolean
+  Profile.phone(): String
+  Profile.phoneVerifiedAt(): Date
+  Profile.phoneVerifyCode(): String
+  Profile.profileId(): String
+  Profile.profileName(): String
+  Profile.profileRole(): String
+  Profile.profileUrl(): String
+  Profile.regionId(): String
+  Profile.role(): String
+  Profile.secondName(): String
+  Profile.status(): String
+  Profile.token(): String
+  Profile.updatedAt(): Date
+  Profile.userId(): ID
+  Profile.userType(): String
+  Profile.username(): String
+  Profile.usernameType(): String
+  Profile.wardId(): String
+  Profile.whatsapp(): String
+  Profile.whatsappVerifiedAt(): Date
+  Profile.whatsappVerifyCode(): String
+  ProfileInput.email: String
+  ProfileInput.id: String
+  ProfileInput.phone: String
+  ProfileInput.username: String
+  ProfileInput.usernameType: String
+  Query.profile(input:ProfileInput): Profile
+  Query.refreshToken(moduleName:String,refreshToken:String): CredentialToken
+  Query.tenantAvailability(customDomain:String,customSubdomain:String,domain:String,id:String,subdomain:String): Boolean
+  RegistrationInput.address: String
+  RegistrationInput.description: String
+  RegistrationInput.domain: String
+  RegistrationInput.email: String
+  RegistrationInput.firstName: String
+  RegistrationInput.isApproved: Boolean
+  RegistrationInput.language: String
+  RegistrationInput.lastName: String
+  RegistrationInput.logoUrl: String
+  RegistrationInput.organization: String
+  RegistrationInput.phone: String
+  RegistrationInput.status: String
+  RegistrationInput.subdomain: String
+  RegistrationInput.type: OrganizationTypeEnum
+  RegistrationInput.userId: String
+  RegistrationInput.website: String
+  ResetPasswordInput.username: String
+  SocialLoginInput.accessToken: String
+  SocialLoginInput.authUser: Any
+  SocialLoginInput.expiresIn: Int
+  SocialLoginInput.prompt: String
+  SocialLoginInput.scope: String
+  SocialLoginInput.tokenType: String
+  UsernameIdentifier = email
+  UsernameIdentifier = phone
+  UsernameIdentifier = whatsapp
+ENUM LoginTypeEnum
+ENUM OrganizationTypeEnum
+ENUM UsernameIdentifier
+INPUT_OBJECT ChangePasswordInput
+INPUT_OBJECT ConcatOtpInput
+INPUT_OBJECT ConfirmTokenInput
+INPUT_OBJECT ContactVerifyInput
+INPUT_OBJECT LoginInput
+INPUT_OBJECT OtpInput
+INPUT_OBJECT ProfileInput
+INPUT_OBJECT RegistrationInput
+INPUT_OBJECT ResetPasswordInput
+INPUT_OBJECT SocialLoginInput
+OBJECT ActionResponse
+OBJECT ConfirmTokenResponse
+OBJECT CredentialToken
+OBJECT Mutation
+OBJECT Profile
+OBJECT Query
+SCALAR Any
+SCALAR Boolean
+SCALAR Date
+SCALAR ID
+SCALAR Int
+SCALAR String

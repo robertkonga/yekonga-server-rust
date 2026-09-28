@@ -53,6 +53,7 @@ struct State {
     context: Map<String, Value>,
     client: Option<ClientPayload>,
     token_payload: Option<TokenPayload>,
+    audit_changes: Vec<crate::audit::AuditChange>,
 }
 
 /// Everything needed to build a [`Request`]; filled in by the dispatcher.
@@ -309,6 +310,17 @@ impl Request {
 
     pub fn set_tenant_id(&self, tenant_id: impl Into<Value>) {
         self.set_context(keys::CURRENT_TENANT_ID, tenant_id);
+    }
+
+    /// Buffers a data change for the audit trail (flushed when the request
+    /// ends).
+    pub(crate) fn add_audit_change(&self, change: crate::audit::AuditChange) {
+        self.write().audit_changes.push(change);
+    }
+
+    /// Takes the buffered audit changes, leaving none.
+    pub(crate) fn take_audit_changes(&self) -> Vec<crate::audit::AuditChange> {
+        std::mem::take(&mut self.write().audit_changes)
     }
 
     /// The access token: from the token middleware, else the

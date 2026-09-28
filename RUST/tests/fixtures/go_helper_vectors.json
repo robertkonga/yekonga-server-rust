@@ -219,6 +219,164 @@
   "underscore": "a_b",
   "variable": "aB"
  },
+ "__contacts": [
+  {
+   "formatPhone": "255712345678",
+   "input": "0712345678",
+   "isEmail": false,
+   "isPhone": true
+  },
+  {
+   "formatPhone": "255712345678",
+   "input": "712345678",
+   "isEmail": false,
+   "isPhone": true
+  },
+  {
+   "formatPhone": "255712345678",
+   "input": "+255 712 345 678",
+   "isEmail": false,
+   "isPhone": true
+  },
+  {
+   "formatPhone": "255712345678",
+   "input": "255712345678",
+   "isEmail": false,
+   "isPhone": true
+  },
+  {
+   "formatPhone": "",
+   "input": "25571234567",
+   "isEmail": false,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "12025550143",
+   "input": "+1 202-555-0143",
+   "isEmail": false,
+   "isPhone": true
+  },
+  {
+   "formatPhone": "12025550143",
+   "input": "12025550143",
+   "isEmail": false,
+   "isPhone": true
+  },
+  {
+   "formatPhone": "255712345678",
+   "input": "0712.345,678",
+   "isEmail": false,
+   "isPhone": true
+  },
+  {
+   "formatPhone": "",
+   "input": "071234567",
+   "isEmail": false,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "",
+   "input": "abc",
+   "isEmail": false,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "",
+   "input": "",
+   "isEmail": false,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "0712345678x",
+   "input": "0712345678x",
+   "isEmail": false,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "(202)5550143",
+   "input": "(202) 555-0143",
+   "isEmail": false,
+   "isPhone": true
+  },
+  {
+   "formatPhone": "",
+   "input": "a@b.tz",
+   "isEmail": true,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "AB@ExampleCOM",
+   "input": "A.B@Example.COM",
+   "isEmail": true,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "",
+   "input": "a@b",
+   "isEmail": false,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "",
+   "input": "a b@c.tz",
+   "isEmail": false,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "",
+   "input": "\"x y\"@c.tz",
+   "isEmail": true,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "",
+   "input": "a@[1.2.3.4]",
+   "isEmail": true,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "",
+   "input": "a@b.c",
+   "isEmail": false,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "x@subdomaincotz",
+   "input": "x@sub.domain.co.tz",
+   "isEmail": true,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "",
+   "input": "a..b@c.tz",
+   "isEmail": false,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "",
+   "input": ".a@c.tz",
+   "isEmail": false,
+   "isPhone": false
+  },
+  {
+   "formatPhone": "abc\n255712345678",
+   "input": "abc\n255712345678",
+   "isEmail": false,
+   "isPhone": true
+  },
+  {
+   "formatPhone": "255712345678",
+   "input": "+255712345678",
+   "isEmail": false,
+   "isPhone": true
+  },
+  {
+   "formatPhone": "00255712345678",
+   "input": "00255712345678",
+   "isEmail": false,
+   "isPhone": false
+  }
+ ],
  "__domains": {
   "": {
    "extract": "",

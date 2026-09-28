@@ -27,43 +27,78 @@ use crate::model::DataModel;
 use crate::request::Request;
 use crate::response::Response;
 
-/// Serves the GraphQL API at `graphql.apiRoute`: the query comes from the
+/// Serves the GraphQL API at `graphql.apiRoute`, and on authorization
+/// servers the auth API at `graphql.apiAuthRoute`. The query comes from the
 /// JSON body (`query`, `operationName`, `variables`) or the `query` URL
 /// parameter.
 pub(crate) fn register_graphql_route(app: &Yekonga) {
-    let route = app.config().graphql.api_route.clone();
+    let config = app.config();
+
+    let auth_route = config.graphql.api_auth_route.clone();
+    if config.is_authorization_server && !auth_route.is_empty() {
+        app.all(&auth_route, |req, res| async move {
+            let config = req.app().config();
+            let Some((query, variables, operation_name)) =
+                graphql_request(&req, &res, config.auth_playground_enable)
+            else {
+                return;
+            };
+            let result = req
+                .app()
+                .auth_graphql(&query, variables, &operation_name, Some(&req), Some(&res))
+                .await;
+            res.json(&result);
+        });
+    }
+
+    let route = config.graphql.api_route.clone();
     if route.is_empty() {
         return;
     }
 
     app.all(&route, |req, res| async move {
-        let mut query = req.query("query");
-        let mut operation_name = String::new();
-        let mut variables = json!({});
-
-        if let Value::Object(body) = req.body() {
-            if let Some(Value::String(q)) = body.get("query") {
-                query = q.clone();
-            }
-            if let Some(Value::String(name)) = body.get("operationName") {
-                operation_name = name.clone();
-            }
-            if let Some(vars @ Value::Object(_)) = body.get("variables") {
-                variables = vars.clone();
-            }
-        }
-
-        if !req.app().config().api_playground_enable && is_introspection_query(&query) {
-            res.json(&json!({"errors": [{"message": "Introspection is disabled"}]}));
+        let config = req.app().config();
+        let Some((query, variables, operation_name)) =
+            graphql_request(&req, &res, config.api_playground_enable)
+        else {
             return;
-        }
-
+        };
         let result = req
             .app()
             .graphql(&query, variables, &operation_name, Some(&req))
             .await;
         res.json(&result);
     });
+}
+
+/// The query, variables and operation name of a GraphQL request, or `None`
+/// after refusing an introspection query when the playground is off.
+fn graphql_request(
+    req: &Request,
+    res: &Response,
+    playground_enabled: bool,
+) -> Option<(String, Value, String)> {
+    let mut query = req.query("query");
+    let mut operation_name = String::new();
+    let mut variables = json!({});
+
+    if let Value::Object(body) = req.body() {
+        if let Some(Value::String(q)) = body.get("query") {
+            query = q.clone();
+        }
+        if let Some(Value::String(name)) = body.get("operationName") {
+            operation_name = name.clone();
+        }
+        if let Some(vars @ Value::Object(_)) = body.get("variables") {
+            variables = vars.clone();
+        }
+    }
+
+    if !playground_enabled && is_introspection_query(&query) {
+        res.json(&json!({"errors": [{"message": "Introspection is disabled"}]}));
+        return None;
+    }
+    Some((query, variables, operation_name))
 }
 
 pub(crate) fn register_rest_routes(app: &Yekonga) {

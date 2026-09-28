@@ -89,6 +89,20 @@ fn domains_match_go() {
 }
 
 #[test]
+fn contacts_match_go() {
+    for case in vectors()["__contacts"].as_array().unwrap() {
+        let input = case["input"].as_str().unwrap();
+        assert_eq!(
+            format_phone(input),
+            case["formatPhone"].as_str().unwrap(),
+            "format_phone({input:?})"
+        );
+        assert_eq!(is_phone(input), case["isPhone"], "is_phone({input:?})");
+        assert_eq!(is_email(input), case["isEmail"], "is_email({input:?})");
+    }
+}
+
+#[test]
 fn models_match_go() {
     use yekonga::model::build_system_models;
     use yekonga::{DatabaseStructure, YekongaConfig};
@@ -275,6 +289,11 @@ fn normalized_schema(introspection: &Value) -> String {
 }
 
 async fn introspect(config: Value) -> String {
+    introspect_schema(config, false).await
+}
+
+/// The auto-generated schema, or the auth schema (`graphql.apiAuthRoute`).
+async fn introspect_schema(config: Value, auth: bool) -> String {
     use yekonga::{DatabaseStructure, LocalBackend, Yekonga, YekongaConfig};
 
     let config: YekongaConfig = serde_json::from_value(config).unwrap();
@@ -287,23 +306,19 @@ async fn introspect(config: Value) -> String {
         std::sync::Arc::new(LocalBackend::in_memory()),
     );
 
-    let result = app
-        .graphql(
-            include_str!("fixtures/introspection.graphql"),
-            serde_json::json!({}),
-            "",
-            None,
-        )
-        .await;
+    let query = include_str!("fixtures/introspection.graphql");
+    let result = if auth {
+        app.auth_graphql(query, serde_json::json!({}), "", None, None)
+            .await
+    } else {
+        app.graphql(query, serde_json::json!({}), "", None).await
+    };
     assert!(result.get("errors").is_none(), "{result}");
     normalized_schema(&result)
 }
 
-#[tokio::test]
-async fn graphql_schema_matches_go() {
-    let rust = introspect(serde_json::json!({})).await;
-    let go = include_str!("fixtures/go_graphql_schema.txt").trim_end();
-
+fn assert_same_schema(rust: &str, go: &str) {
+    let go = go.trim_end();
     if rust != go {
         let missing: Vec<&str> = go
             .lines()
@@ -321,6 +336,32 @@ async fn graphql_schema_matches_go() {
             extra.join("\n")
         );
     }
+}
+
+#[tokio::test]
+async fn graphql_schema_matches_go() {
+    let rust = introspect(serde_json::json!({})).await;
+    assert_same_schema(&rust, include_str!("fixtures/go_graphql_schema.txt"));
+}
+
+#[tokio::test]
+async fn auth_schema_matches_go() {
+    // The GraphQL library always has the built-in Float scalar, which no
+    // auth field uses; Go's schema leaves it out.
+    let without_float = |schema: String| {
+        schema
+            .lines()
+            .filter(|l| *l != "SCALAR Float")
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
+
+    let rust = without_float(introspect_schema(serde_json::json!({}), true).await);
+    assert_same_schema(&rust, include_str!("fixtures/go_auth_schema.txt"));
+
+    let secure = serde_json::json!({"secureAuthentication": true});
+    let rust = without_float(introspect_schema(secure, true).await);
+    assert_same_schema(&rust, include_str!("fixtures/go_auth_schema_secure.txt"));
 }
 
 #[tokio::test]
