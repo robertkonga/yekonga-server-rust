@@ -250,6 +250,15 @@ impl Yekonga {
         &self.0.backend
     }
 
+    /// Creates the database indexes the models need (MongoDB). `start` does
+    /// this in the background unless `database.disableAutoIndexes` is set.
+    pub async fn ensure_indexes(&self) -> std::result::Result<usize, DbError> {
+        self.0
+            .backend
+            .ensure_indexes(self.0.models.values().map(|m| m.as_ref()).collect())
+            .await
+    }
+
     pub(crate) fn caches(&self) -> &LookupCaches {
         &self.0.caches
     }
@@ -703,6 +712,19 @@ impl Yekonga {
             tracing::warn!(
                 "security.rateLimit and security.errorGuard are not ported yet and are ignored"
             );
+        }
+
+        if !config.database.disable_auto_indexes {
+            // In the background: creating an existing index is a no-op, and
+            // MongoDB builds new ones without blocking reads and writes.
+            let app = self.clone();
+            tokio::spawn(async move {
+                match app.ensure_indexes().await {
+                    Ok(0) => {}
+                    Ok(n) => tracing::info!(indexes = n, "database indexes checked"),
+                    Err(err) => tracing::error!(%err, "could not create database indexes"),
+                }
+            });
         }
 
         let port = port.unwrap_or(config.ports.server as u16);

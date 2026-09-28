@@ -31,13 +31,44 @@ fn schema() -> DatabaseStructure {
     }))
 }
 
-fn app_with(config: Value) -> Yekonga {
+/// A fresh app per backend: the in-memory local backend, plus MongoDB when
+/// `YEKONGA_TEST_MONGO_PORT` points at a throwaway server (each test uses,
+/// and first drops, its own database).
+#[cfg_attr(not(feature = "mongodb"), allow(unused_mut, unused_variables))]
+async fn apps(test: &str, config: Value) -> Vec<Yekonga> {
     let config: YekongaConfig = serde_json::from_value(config).unwrap();
-    Yekonga::with_backend(config, schema(), Arc::new(LocalBackend::in_memory()))
-}
+    let mut apps = vec![Yekonga::with_backend(
+        config.clone(),
+        schema(),
+        Arc::new(LocalBackend::in_memory()),
+    )];
 
-fn app() -> Yekonga {
-    app_with(json!({"authentication": {"secretToken": "secret"}}))
+    #[cfg(feature = "mongodb")]
+    if let Ok(port) = std::env::var("YEKONGA_TEST_MONGO_PORT") {
+        use yekonga::db::mongo::{mongodb, MongoBackend};
+
+        let mut database = config.database.clone();
+        database.host = "127.0.0.1".into();
+        database.port = port.clone();
+        database.database_name = format!("yekonga_rust_test_{test}");
+
+        let client = mongodb::Client::with_uri_str(format!("mongodb://127.0.0.1:{port}"))
+            .await
+            .unwrap();
+        client
+            .database(&database.database_name)
+            .drop()
+            .await
+            .unwrap();
+
+        apps.push(Yekonga::with_backend(
+            config,
+            schema(),
+            Arc::new(MongoBackend::new(database)),
+        ));
+    }
+
+    apps
 }
 
 fn ids(records: &[DataMap], field: &str) -> Vec<Value> {
@@ -75,9 +106,7 @@ async fn seed(app: &Yekonga) -> (String, String) {
     (asha, juma)
 }
 
-#[tokio::test]
-async fn create_formats_input() {
-    let app = app();
+async fn create_formats_input_body(app: Yekonga) {
     let order = app
         .query("Order")
         .unwrap()
@@ -109,9 +138,7 @@ async fn create_formats_input() {
     assert_eq!(defaulted["tags"], json!([]), "array fields default to []");
 }
 
-#[tokio::test]
-async fn filters() {
-    let app = app();
+async fn filters_body(app: Yekonga) {
     let (asha, _) = seed(&app).await;
     let orders = || app.query("Order").unwrap();
     let titles = |r: Vec<DataMap>| {
@@ -263,9 +290,7 @@ async fn filters() {
     assert_eq!(ids(&found, "email"), [json!("asha@shop.tz")]);
 }
 
-#[tokio::test]
-async fn relation_filters() {
-    let app = app();
+async fn relation_filters_body(app: Yekonga) {
     seed(&app).await;
 
     // Orders of users matching a condition (parent relation).
@@ -290,9 +315,7 @@ async fn relation_filters() {
     assert_eq!(ids(&users, "email"), [json!("juma@shop.tz")]);
 }
 
-#[tokio::test]
-async fn sorting_paging_and_aggregates() {
-    let app = app();
+async fn sorting_paging_and_aggregates_body(app: Yekonga) {
     seed(&app).await;
     let orders = || app.query("Order").unwrap();
 
@@ -384,9 +407,7 @@ async fn sorting_paging_and_aggregates() {
     );
 }
 
-#[tokio::test]
-async fn updates_and_deletes() {
-    let app = app();
+async fn updates_and_deletes_body(app: Yekonga) {
     seed(&app).await;
     let orders = || app.query("Order").unwrap();
 
@@ -473,10 +494,7 @@ async fn get(app: &Yekonga, request: HttpRequest<Body>) -> Value {
         .unwrap_or_else(|_| Value::String(String::from_utf8_lossy(&body).into()))
 }
 
-#[tokio::test]
-async fn tenant_resolution_and_scoping() {
-    let app = app_with(json!({"hasTenant": true, "authentication": {"secretToken": "secret"}}));
-
+async fn tenant_resolution_and_scoping_body(app: Yekonga) {
     let tenant = app
         .query("Tenant")
         .unwrap()
@@ -568,11 +586,7 @@ async fn tenant_resolution_and_scoping() {
     assert_eq!(reply, "Ok!");
 }
 
-#[tokio::test]
-async fn authorization_server_loads_the_user() {
-    let app = app_with(
-        json!({"isAuthorizationServer": true, "authentication": {"secretToken": "secret"}}),
-    );
+async fn authorization_server_loads_the_user_body(app: Yekonga) {
     let user = app
         .query("User")
         .unwrap()
@@ -600,4 +614,90 @@ async fn authorization_server_loads_the_user() {
     )
     .await;
     assert_eq!(reply, json!({"email": "a@b.tz", "first": "Asha"}));
+}
+
+// One test per scenario, run against every available backend.
+
+#[tokio::test]
+async fn create_formats_input() {
+    for app in apps(
+        "create_formats_input",
+        json!({"authentication": {"secretToken": "secret"}}),
+    )
+    .await
+    {
+        create_formats_input_body(app).await;
+    }
+}
+
+#[tokio::test]
+async fn filters() {
+    for app in apps(
+        "filters",
+        json!({"authentication": {"secretToken": "secret"}}),
+    )
+    .await
+    {
+        filters_body(app).await;
+    }
+}
+
+#[tokio::test]
+async fn relation_filters() {
+    for app in apps(
+        "relation_filters",
+        json!({"authentication": {"secretToken": "secret"}}),
+    )
+    .await
+    {
+        relation_filters_body(app).await;
+    }
+}
+
+#[tokio::test]
+async fn sorting_paging_and_aggregates() {
+    for app in apps(
+        "sorting_paging_and_aggregates",
+        json!({"authentication": {"secretToken": "secret"}}),
+    )
+    .await
+    {
+        sorting_paging_and_aggregates_body(app).await;
+    }
+}
+
+#[tokio::test]
+async fn updates_and_deletes() {
+    for app in apps(
+        "updates_and_deletes",
+        json!({"authentication": {"secretToken": "secret"}}),
+    )
+    .await
+    {
+        updates_and_deletes_body(app).await;
+    }
+}
+
+#[tokio::test]
+async fn tenant_resolution_and_scoping() {
+    for app in apps(
+        "tenant_resolution_and_scoping",
+        json!({"hasTenant": true, "authentication": {"secretToken": "secret"}}),
+    )
+    .await
+    {
+        tenant_resolution_and_scoping_body(app).await;
+    }
+}
+
+#[tokio::test]
+async fn authorization_server_loads_the_user() {
+    for app in apps(
+        "authorization_server_loads_the_user",
+        json!({"isAuthorizationServer": true, "authentication": {"secretToken": "secret"}}),
+    )
+    .await
+    {
+        authorization_server_loads_the_user_body(app).await;
+    }
 }

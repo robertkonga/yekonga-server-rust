@@ -7,6 +7,11 @@ description = "Rust port of the Yekonga server framework: schema-driven REST, Gr
 license-file = "../GO/LICENSE"
 publish = false
 
+[features]
+default = ["mongodb"]
+# The MongoDB backend (`database.kind: "mongodb"`).
+mongodb = ["dep:mongodb"]
+
 [dependencies]
 axum = { version = "0.8", default-features = false, features = ["http1", "http2", "tokio"] }
 base64 = "0.22"
@@ -17,13 +22,14 @@ futures-util = { version = "0.3", default-features = false, features = ["std"] }
 hmac = "0.12"
 http = "1"
 mime_guess = "2"
+mongodb = { version = "3", optional = true }
 percent-encoding = "2"
 regex = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
 thiserror = "2"
-tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal"] }
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal", "sync"] }
 tower = { version = "0.5", features = ["util"] }
 tower-http = { version = "0.6", features = ["compression-gzip", "fs"] }
 tracing = "0.1"
