@@ -9,8 +9,9 @@ The port is being done in steps. Step 1 (the foundation), step 2 (the query
 builder and all four database backends), step 3 (GraphQL, REST and the auth
 endpoints) and step 4 (cloud functions, triggers, the audit trail, cron jobs,
 the WebSocket server and socket change events) are done. Step 5 is under way:
-rate limiting, the error guard, the IP whitelist and the notification queue
-are done; the gateway providers, uploads and TLS are next.
+rate limiting, the error guard, the IP whitelist, the notification queue,
+file uploads and downloads, and TLS are done; the SMS/WhatsApp/payment
+gateway providers and the Excel-to-CSV conversion remain.
 
 ## Status
 
@@ -55,7 +56,9 @@ are done; the gateway providers, uploads and TLS are next.
 | IP whitelist (`IpAccessRule` `whitelist` rows exempt a client from both) | ✅ |
 | Notifications (`notify`): queues `Notification` records per channel; a cron job dispatches them | ✅ |
 | Send functions (`set_send_sms`/`set_send_email`/`set_send_whatsapp`); OTP codes queue as notifications | ✅ delivery providers (Beem/SMTP) not ported — register a sender |
-| SMS / WhatsApp / payment gateway providers, uploads/downloads, TLS | ⏳ step 5 |
+| File uploads (`/upload`, `/upload-files`) and downloads (`/download/:file.:ext`) | ✅ saved under `public/uploads`; image resize not ported |
+| TLS (`ports.secure`): HTTPS on `sslServer` with an HTTP→HTTPS redirect | ✅ certificate at `certificate/cert.pem` + `key.pem` |
+| SMS / WhatsApp / payment gateway providers, `/excel-to-csv` | ⏳ step 5 |
 | WebSocket JS SDK (`/yekonga.io/yekonga.io.js`) | ⏳ the embedded client script isn't ported |
 
 A tenant id set by a preload middleware (`req.set_tenant_id(...)`) is kept
@@ -131,8 +134,15 @@ everything that runs after it.
 
 - Relative `public` directories keep their first character. The Go code
   turns `"public"` into `"./ublic"`.
-- `ports.secure: true` fails at startup instead of serving TLS. Until TLS
-  is ported, terminate TLS at a reverse proxy.
+- `ports.secure: true` serves HTTPS on `ports.sslServer` with the certificate
+  at `certificate/cert.pem` and key at `certificate/key.pem`, and runs an
+  HTTP→HTTPS redirect on `ports.server`. TLS uses rustls with the ring
+  provider (Go uses Go's crypto/tls); the certificate and key formats (PEM)
+  are the same.
+- Uploaded files are saved under `public/uploads` with a random name and the
+  original extension. Go resizes images to WebP on upload; the port stores
+  them unchanged. `/excel-to-csv` returns "not supported by the Rust port yet"
+  (the Excel parser isn't ported).
 - `security.rateLimit`, `security.errorGuard` and the `IpAccessRule`
   whitelist are enforced. The rate limiter is a per-client token bucket; the
   error guard blocks a client that sends more than `requestsPerSecond` error

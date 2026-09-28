@@ -757,6 +757,7 @@ impl Yekonga {
         self.register_notification_job();
         crate::rest::register_graphql_route(self);
         crate::rest::register_rest_routes(self);
+        crate::upload::register_routes(self);
 
         for public in &self.0.config.public {
             match self.resolve_public_directory(public) {
@@ -832,15 +833,6 @@ impl Yekonga {
     /// serves until Ctrl-C.
     pub async fn start(&self, port: Option<u16>) -> Result<()> {
         let config = &self.0.config;
-        if config.ports.secure {
-            // TLS isn't ported yet; refusing is safer than silently serving plain HTTP.
-            return Err(Error::Bind(
-                format!("port {}", config.ports.ssl_server),
-                std::io::Error::other(
-                    "ports.secure (TLS) is not supported yet; terminate TLS at a reverse proxy",
-                ),
-            ));
-        }
         if !config.database.disable_auto_indexes {
             // In the background: creating an existing index is a no-op, and
             // MongoDB builds new ones without blocking reads and writes.
@@ -858,6 +850,13 @@ impl Yekonga {
             crate::cron::start(self.clone());
         }
 
+        // With ports.secure, serve HTTPS on ssl_server (default port when
+        // none is given) and redirect plain HTTP on ports.server to it.
+        if config.ports.secure {
+            let port = port.unwrap_or(config.ports.ssl_server as u16);
+            return self.start_tls(port, config.ports.server as u16).await;
+        }
+
         let port = port.unwrap_or(config.ports.server as u16);
         let address = format!("0.0.0.0:{port}");
         let listener = tokio::net::TcpListener::bind(&address)
@@ -865,11 +864,7 @@ impl Yekonga {
             .map_err(|e| Error::Bind(address.clone(), e))?;
 
         tracing::info!("Server is running on {address}");
-        for ready in
-            std::mem::take(&mut *self.0.when_ready.lock().unwrap_or_else(|e| e.into_inner()))
-        {
-            tokio::task::spawn_blocking(ready);
-        }
+        self.run_when_ready();
 
         let service = self
             .router()
@@ -880,6 +875,79 @@ impl Yekonga {
             })
             .await
             .map_err(Error::Serve)
+    }
+
+    fn run_when_ready(&self) {
+        for ready in
+            std::mem::take(&mut *self.0.when_ready.lock().unwrap_or_else(|e| e.into_inner()))
+        {
+            tokio::task::spawn_blocking(ready);
+        }
+    }
+
+    /// Serves HTTPS on `port` with `certificate/cert.pem` and
+    /// `certificate/key.pem`, and a plain-HTTP redirect server on
+    /// `redirect_port` (port of the `ports.secure` branch of Go's `Start`).
+    async fn start_tls(&self, port: u16, redirect_port: u16) -> Result<()> {
+        // rustls needs a process-wide crypto provider; install one once.
+        let _ = rustls::crypto::ring::default_provider().install_default();
+
+        let cert = self.resolve_certificate("cert.pem");
+        let key = self.resolve_certificate("key.pem");
+        let tls = axum_server::tls_rustls::RustlsConfig::from_pem_file(&cert, &key)
+            .await
+            .map_err(|e| Error::Bind(format!("TLS certificate ({})", cert.display()), e))?;
+
+        // Redirect http://host/path to https on the redirect port.
+        let redirect = tokio::spawn(async move {
+            let app = axum::Router::new().fallback(|req: http::Request<Body>| async move {
+                let host = header_value(req.headers(), "host");
+                let path = req
+                    .uri()
+                    .path_and_query()
+                    .map(|p| p.as_str())
+                    .unwrap_or("/");
+                let target = format!("https://{host}{path}");
+                match HeaderValue::from_str(&target) {
+                    Ok(location) => {
+                        let mut response = http::Response::new(Body::empty());
+                        *response.status_mut() = StatusCode::MOVED_PERMANENTLY;
+                        response
+                            .headers_mut()
+                            .insert(http::header::LOCATION, location);
+                        response
+                    }
+                    Err(_) => text_response(StatusCode::BAD_REQUEST, "bad host"),
+                }
+            });
+            if let Ok(listener) = tokio::net::TcpListener::bind(("0.0.0.0", redirect_port)).await {
+                let _ = axum::serve(listener, app).await;
+            }
+        });
+
+        let address: SocketAddr = ([0, 0, 0, 0], port).into();
+        tracing::info!("Server is running on https://0.0.0.0:{port}");
+        self.run_when_ready();
+
+        let result = axum_server::bind_rustls(address, tls)
+            .serve(
+                self.router()
+                    .into_make_service_with_connect_info::<SocketAddr>(),
+            )
+            .await
+            .map_err(Error::Serve);
+        redirect.abort();
+        result
+    }
+
+    /// A path under the `certificate/` directory: relative to the working
+    /// directory, else to the executable's directory.
+    fn resolve_certificate(&self, name: &str) -> PathBuf {
+        let relative = PathBuf::from("certificate").join(name);
+        if relative.is_file() {
+            return relative;
+        }
+        self.0.root_path.join("certificate").join(name)
     }
 
     // ----- request pipeline ----------------------------------------------
