@@ -1,0 +1,11 @@
+{
+  "Products": {
+    "name": { "type": "String", "required": true },
+    "price": { "type": "Float", "default": 0 },
+    "categoryId": { "type": "ID", "foreignKey": "Category.id" },
+    "tags": { "type": "[String]" }
+  },
+  "Categories": {
+    "name": { "type": "String" }
+  }
+}

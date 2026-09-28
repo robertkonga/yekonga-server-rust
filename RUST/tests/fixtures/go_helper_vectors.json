@@ -1,0 +1,515 @@
+{
+ "ABC_def": {
+  "camel": "AbcDef",
+  "childRel": "abcDefOrders",
+  "parentRel": "abcDef",
+  "plural": "ABC_deves",
+  "singular": "ABC_def",
+  "slug": "abc-def",
+  "title": "Abc Def",
+  "underscore": "abc_def",
+  "variable": "abcDef"
+ },
+ "Address": {
+  "camel": "Address",
+  "childRel": "addressOrders",
+  "parentRel": "address",
+  "plural": "Addreses",
+  "singular": "Addres",
+  "slug": "address",
+  "title": "Address",
+  "underscore": "address",
+  "variable": "address"
+ },
+ "AuditTrails": {
+  "camel": "AuditTrails",
+  "childRel": "auditTrailsOrders",
+  "parentRel": "auditTrails",
+  "plural": "AuditTrails",
+  "singular": "AuditTrail",
+  "slug": "audit-trails",
+  "title": "Audit Trails",
+  "underscore": "audit_trails",
+  "variable": "auditTrails"
+ },
+ "Boy": {
+  "camel": "Boy",
+  "childRel": "boyOrders",
+  "parentRel": "boy",
+  "plural": "Boys",
+  "singular": "Boy",
+  "slug": "boy",
+  "title": "Boy",
+  "underscore": "boy",
+  "variable": "boy"
+ },
+ "Categories": {
+  "camel": "Categories",
+  "childRel": "categoriesOrders",
+  "parentRel": "categories",
+  "plural": "Categories",
+  "singular": "Category",
+  "slug": "categories",
+  "title": "Categories",
+  "underscore": "categories",
+  "variable": "categories"
+ },
+ "ChatGroupMembers": {
+  "camel": "ChatGroupMembers",
+  "childRel": "chatGroupMembersOrders",
+  "parentRel": "chatGroupMembers",
+  "plural": "ChatGroupMembers",
+  "singular": "ChatGroupMember",
+  "slug": "chat-group-members",
+  "title": "Chat Group Members",
+  "underscore": "chat_group_members",
+  "variable": "chatGroupMembers"
+ },
+ "HTTPServer": {
+  "camel": "Httpserver",
+  "childRel": "httpserverOrders",
+  "parentRel": "httpserver",
+  "plural": "HTTPServers",
+  "singular": "HTTPServer",
+  "slug": "httpserver",
+  "title": "Httpserver",
+  "underscore": "httpserver",
+  "variable": "httpserver"
+ },
+ "Invoices": {
+  "camel": "Invoices",
+  "childRel": "invoicesOrders",
+  "parentRel": "invoices",
+  "plural": "Invoices",
+  "singular": "Invoice",
+  "slug": "invoices",
+  "title": "Invoices",
+  "underscore": "invoices",
+  "variable": "invoices"
+ },
+ "Mañana_día": {
+  "camel": "MañanaDía",
+  "childRel": "mañanaDíaOrders",
+  "parentRel": "mañanaDía",
+  "plural": "Mañana_días",
+  "singular": "Mañana_día",
+  "slug": "ma-ana-d-a",
+  "title": "Mañana Día",
+  "underscore": "mañana_día",
+  "variable": "mañanaDía"
+ },
+ "My Yekonga App": {
+  "camel": "MyYekongaApp",
+  "childRel": "myYekongaAppOrders",
+  "parentRel": "myYekongaApp",
+  "plural": "My Yekonga Apps",
+  "singular": "My Yekonga App",
+  "slug": "my-yekonga-app",
+  "title": "My Yekonga App",
+  "underscore": "my_yekonga_app",
+  "variable": "myYekongaApp"
+ },
+ "NGO": {
+  "camel": "Ngo",
+  "childRel": "ngoOrders",
+  "parentRel": "ngo",
+  "plural": "NGOs",
+  "singular": "NGO",
+  "slug": "ngo",
+  "title": "Ngo",
+  "underscore": "ngo",
+  "variable": "ngo"
+ },
+ "Order": {
+  "camel": "Order",
+  "childRel": "orderOrders",
+  "parentRel": "order",
+  "plural": "Orders",
+  "singular": "Order",
+  "slug": "order",
+  "title": "Order",
+  "underscore": "order",
+  "variable": "order"
+ },
+ "OrderItems": {
+  "camel": "OrderItems",
+  "childRel": "orderItemsOrders",
+  "parentRel": "orderItems",
+  "plural": "OrderItems",
+  "singular": "OrderItem",
+  "slug": "order-items",
+  "title": "Order Items",
+  "underscore": "order_items",
+  "variable": "orderItems"
+ },
+ "PDFFile": {
+  "camel": "Pdffile",
+  "childRel": "pdffileOrders",
+  "parentRel": "pdffile",
+  "plural": "PDFFiles",
+  "singular": "PDFFile",
+  "slug": "pdffile",
+  "title": "Pdffile",
+  "underscore": "pdffile",
+  "variable": "pdffile"
+ },
+ "PaymentMethods": {
+  "camel": "PaymentMethods",
+  "childRel": "paymentMethodsOrders",
+  "parentRel": "paymentMethods",
+  "plural": "PaymentMethods",
+  "singular": "PaymentMethod",
+  "slug": "payment-methods",
+  "title": "Payment Methods",
+  "underscore": "payment_methods",
+  "variable": "paymentMethods"
+ },
+ "TenantCatches": {
+  "camel": "TenantCatches",
+  "childRel": "tenantCatchesOrders",
+  "parentRel": "tenantCatches",
+  "plural": "TenantCatches",
+  "singular": "TenantCatch",
+  "slug": "tenant-catches",
+  "title": "Tenant Catches",
+  "underscore": "tenant_catches",
+  "variable": "tenantCatches"
+ },
+ "TenantConfigs": {
+  "camel": "TenantConfigs",
+  "childRel": "tenantConfigsOrders",
+  "parentRel": "tenantConfigs",
+  "plural": "TenantConfigs",
+  "singular": "TenantConfig",
+  "slug": "tenant-configs",
+  "title": "Tenant Configs",
+  "underscore": "tenant_configs",
+  "variable": "tenantConfigs"
+ },
+ "UserProfiles": {
+  "camel": "UserProfiles",
+  "childRel": "userProfilesOrders",
+  "parentRel": "userProfiles",
+  "plural": "UserProfiles",
+  "singular": "UserProfile",
+  "slug": "user-profiles",
+  "title": "User Profiles",
+  "underscore": "user_profiles",
+  "variable": "userProfiles"
+ },
+ "Wife": {
+  "camel": "Wife",
+  "childRel": "wifeOrders",
+  "parentRel": "wife",
+  "plural": "Wives",
+  "singular": "Wife",
+  "slug": "wife",
+  "title": "Wife",
+  "underscore": "wife",
+  "variable": "wife"
+ },
+ "__a__b__": {
+  "camel": "AB",
+  "childRel": "aBOrders",
+  "parentRel": "aB",
+  "plural": "__a__b__s",
+  "singular": "__a__b__",
+  "slug": "a-b",
+  "title": "A B",
+  "underscore": "a_b",
+  "variable": "aB"
+ },
+ "__domains": {
+  "": {
+   "extract": "",
+   "main": null
+  },
+  "a.b.example.com": {
+   "extract": "a.b.example.com",
+   "main": "example.com"
+  },
+  "http://user:pw@host.tz/path": {
+   "extract": "host.tz",
+   "main": "host.tz"
+  },
+  "https://api.example.com:8080/x?y": {
+   "extract": "api.example.com:8080",
+   "main": "example.com"
+  },
+  "localhost": {
+   "extract": "localhost",
+   "main": null
+  },
+  "localhost:8080": {
+   "extract": "localhost:8080",
+   "main": null
+  },
+  "my-app.herokuapp.com": {
+   "extract": "my-app.herokuapp.com",
+   "main": "herokuapp.com"
+  },
+  "shop.example.co.tz": {
+   "extract": "shop.example.co.tz",
+   "main": "example.co.tz"
+  }
+ },
+ "__paths": [
+  true,
+  false,
+  true,
+  false,
+  true,
+  true,
+  true,
+  false,
+  true,
+  true,
+  true,
+  false,
+  false,
+  true,
+  false
+ ],
+ "a1b2": {
+  "camel": "A1B2",
+  "childRel": "a1B2Orders",
+  "parentRel": "a1B2",
+  "plural": "a1b2s",
+  "singular": "a1b2",
+  "slug": "a-1-b-2",
+  "title": "A 1 B 2",
+  "underscore": "a_1_b_2",
+  "variable": "a1B2"
+ },
+ "address2Line": {
+  "camel": "Address2Line",
+  "childRel": "address2LineOrders",
+  "parentRel": "address2LineInfo",
+  "plural": "address2Lines",
+  "singular": "address2Line",
+  "slug": "address-2-line",
+  "title": "Address 2 Line",
+  "underscore": "address_2_line",
+  "variable": "address2Line"
+ },
+ "box": {
+  "camel": "Box",
+  "childRel": "boxOrders",
+  "parentRel": "boxInfo",
+  "plural": "boxes",
+  "singular": "box",
+  "slug": "box",
+  "title": "Box",
+  "underscore": "box",
+  "variable": "box"
+ },
+ "bus": {
+  "camel": "Bus",
+  "childRel": "busOrders",
+  "parentRel": "busInfo",
+  "plural": "bus",
+  "singular": "bu",
+  "slug": "bus",
+  "title": "Bus",
+  "underscore": "bus",
+  "variable": "bus"
+ },
+ "church": {
+  "camel": "Church",
+  "childRel": "churchOrders",
+  "parentRel": "churchInfo",
+  "plural": "churches",
+  "singular": "church",
+  "slug": "church",
+  "title": "Church",
+  "underscore": "church",
+  "variable": "church"
+ },
+ "city": {
+  "camel": "City",
+  "childRel": "cityOrders",
+  "parentRel": "cityInfo",
+  "plural": "cities",
+  "singular": "city",
+  "slug": "city",
+  "title": "City",
+  "underscore": "city",
+  "variable": "city"
+ },
+ "createdById": {
+  "camel": "CreatedById",
+  "childRel": "createdByOrders",
+  "parentRel": "createdBy",
+  "plural": "createdByIds",
+  "singular": "createdById",
+  "slug": "created-by-id",
+  "title": "Created By Id",
+  "underscore": "created_by_id",
+  "variable": "createdById"
+ },
+ "day": {
+  "camel": "Day",
+  "childRel": "dayOrders",
+  "parentRel": "dayInfo",
+  "plural": "days",
+  "singular": "day",
+  "slug": "day",
+  "title": "Day",
+  "underscore": "day",
+  "variable": "day"
+ },
+ "e-mail Address": {
+  "camel": "EMailAddress",
+  "childRel": "eMailAddressOrders",
+  "parentRel": "eMailAddress",
+  "plural": "e-mail Addreses",
+  "singular": "e-mail Addres",
+  "slug": "e-mail-address",
+  "title": "E Mail Address",
+  "underscore": "e_mail_address",
+  "variable": "eMailAddress"
+ },
+ "firstName": {
+  "camel": "FirstName",
+  "childRel": "firstNameOrders",
+  "parentRel": "firstNameInfo",
+  "plural": "firstNames",
+  "singular": "firstName",
+  "slug": "first-name",
+  "title": "First Name",
+  "underscore": "first_name",
+  "variable": "firstName"
+ },
+ "hello-world thing": {
+  "camel": "HelloWorldThing",
+  "childRel": "helloWorldThingOrders",
+  "parentRel": "helloWorldThing",
+  "plural": "hello-world things",
+  "singular": "hello-world thing",
+  "slug": "hello-world-thing",
+  "title": "Hello World Thing",
+  "underscore": "hello_world_thing",
+  "variable": "helloWorldThing"
+ },
+ "knife": {
+  "camel": "Knife",
+  "childRel": "knifeOrders",
+  "parentRel": "knifeInfo",
+  "plural": "knives",
+  "singular": "knife",
+  "slug": "knife",
+  "title": "Knife",
+  "underscore": "knife",
+  "variable": "knife"
+ },
+ "leaf": {
+  "camel": "Leaf",
+  "childRel": "leafOrders",
+  "parentRel": "leafInfo",
+  "plural": "leaves",
+  "singular": "leaf",
+  "slug": "leaf",
+  "title": "Leaf",
+  "underscore": "leaf",
+  "variable": "leaf"
+ },
+ "news": {
+  "camel": "News",
+  "childRel": "newsOrders",
+  "parentRel": "newsInfo",
+  "plural": "news",
+  "singular": "new",
+  "slug": "news",
+  "title": "News",
+  "underscore": "news",
+  "variable": "news"
+ },
+ "owner": {
+  "camel": "Owner",
+  "childRel": "ownerOrders",
+  "parentRel": "ownerInfo",
+  "plural": "owners",
+  "singular": "owner",
+  "slug": "owner",
+  "title": "Owner",
+  "underscore": "owner",
+  "variable": "owner"
+ },
+ "per_user": {
+  "camel": "PerUser",
+  "childRel": "perUserOrders",
+  "parentRel": "perUser",
+  "plural": "per_users",
+  "singular": "per_user",
+  "slug": "per-user",
+  "title": "Per User",
+  "underscore": "per_user",
+  "variable": "perUser"
+ },
+ "releases": {
+  "camel": "Releases",
+  "childRel": "releasesOrders",
+  "parentRel": "releasesInfo",
+  "plural": "releases",
+  "singular": "release",
+  "slug": "releases",
+  "title": "Releases",
+  "underscore": "releases",
+  "variable": "releases"
+ },
+ "series": {
+  "camel": "Series",
+  "childRel": "seriesOrders",
+  "parentRel": "seriesInfo",
+  "plural": "series",
+  "singular": "sery",
+  "slug": "series",
+  "title": "Series",
+  "underscore": "series",
+  "variable": "series"
+ },
+ "status": {
+  "camel": "Status",
+  "childRel": "statusOrders",
+  "parentRel": "statusInfo",
+  "plural": "status",
+  "singular": "statu",
+  "slug": "status",
+  "title": "Status",
+  "underscore": "status",
+  "variable": "status"
+ },
+ "userId": {
+  "camel": "UserId",
+  "childRel": "orders",
+  "parentRel": "user",
+  "plural": "userIds",
+  "singular": "userId",
+  "slug": "user-id",
+  "title": "User Id",
+  "underscore": "user_id",
+  "variable": "userId"
+ },
+ "user_id": {
+  "camel": "UserId",
+  "childRel": "orders",
+  "parentRel": "user",
+  "plural": "user_ids",
+  "singular": "user_id",
+  "slug": "user-id",
+  "title": "User Id",
+  "underscore": "user_id",
+  "variable": "userId"
+ },
+ "x": {
+  "camel": "X",
+  "childRel": "xOrders",
+  "parentRel": "xInfo",
+  "plural": "xes",
+  "singular": "x",
+  "slug": "x",
+  "title": "X",
+  "underscore": "x",
+  "variable": "x"
+ }
+}

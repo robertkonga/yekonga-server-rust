@@ -1,0 +1,13 @@
+{
+  "appName": "Yekonga Rust Example",
+  "masterKey": "CHANGE_ME_MASTER",
+  "appKey": "CHANGE_ME_APP",
+  "enableAppKey": false,
+  "connectionId": "example",
+  "cors": true,
+  "restApi": "/api",
+  "graphql": { "apiRoute": "/graphql", "apiAuthRoute": "/graphql-auth" },
+  "database": { "kind": "local" },
+  "authentication": { "secretToken": "CHANGE_ME_SECRET" },
+  "ports": { "server": 8080 }
+}

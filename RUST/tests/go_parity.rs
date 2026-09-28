@@ -1,0 +1,221 @@
+//! Checks the ported helpers against outputs recorded from the Go
+//! implementation (`tests/fixtures/go_helper_vectors.json`, produced by
+//! calling the `helper` package functions on the same inputs).
+
+use serde_json::Value;
+use yekonga::helper::*;
+
+fn vectors() -> serde_json::Map<String, Value> {
+    serde_json::from_str(include_str!("fixtures/go_helper_vectors.json")).unwrap()
+}
+
+#[test]
+fn naming_matches_go() {
+    let mut mismatches = Vec::new();
+
+    for (word, expected) in vectors().iter().filter(|(k, _)| !k.starts_with("__")) {
+        let actual = [
+            ("underscore", to_underscore(word)),
+            ("camel", to_camel_case(word)),
+            ("variable", to_variable(word)),
+            ("slug", to_slug(word)),
+            ("title", to_title(word)),
+            ("plural", pluralize(word)),
+            ("singular", singularize(word)),
+            ("parentRel", get_parent_relative_name("X", "_id", word)),
+            (
+                "childRel",
+                get_child_relative_name("User", "Order", "_id", word),
+            ),
+        ];
+
+        for (name, actual) in actual {
+            if expected[name] != actual.as_str() {
+                mismatches.push(format!(
+                    "{name}({word:?}): go={} rust={actual:?}",
+                    expected[name]
+                ));
+            }
+        }
+    }
+
+    assert!(mismatches.is_empty(), "{}", mismatches.join("\n"));
+}
+
+#[test]
+fn path_match_matches_go() {
+    let paths = [
+        ("/me/admin", "/me/*"),
+        ("/me/admin/x", "/me/*"),
+        ("/me/", "/me/*"),
+        ("/me", "/me/*"),
+        ("/a/b.css", "/a/*.css"),
+        ("/x/c", "/x/[a-c]"),
+        ("/x/d", "/x/[^a-c]"),
+        ("/x", "/[x"),
+        ("*", "\\*"),
+        ("/ab", "/a*b*"),
+        ("/abc/d", "/*/?"),
+        ("/a]", "/[]a]"),
+        ("/-", "/[a-]"),
+        ("abc", "a*c"),
+        ("a/c", "a*c"),
+    ];
+    let expected = vectors()["__paths"].clone();
+
+    for (i, (route, pattern)) in paths.iter().enumerate() {
+        assert_eq!(
+            Value::Bool(match_path(route, pattern)),
+            expected[i],
+            "match_path({route:?}, {pattern:?})"
+        );
+    }
+}
+
+#[test]
+fn domains_match_go() {
+    for (input, expected) in vectors()["__domains"].as_object().unwrap() {
+        assert_eq!(
+            extract_domain(input),
+            expected["extract"].as_str().unwrap(),
+            "extract_domain({input:?})"
+        );
+        assert_eq!(
+            get_main_domain(input).as_deref(),
+            expected["main"].as_str(),
+            "get_main_domain({input:?})"
+        );
+    }
+}
+
+#[test]
+fn models_match_go() {
+    use yekonga::model::build_system_models;
+    use yekonga::{DatabaseStructure, YekongaConfig};
+
+    let config = YekongaConfig::from_json(
+        r#"{"isAuthorizationServer": true, "hasTenant": true, "hasTenantBilling": true,
+            "hasTenantCatch": true, "database": {"kind": "local"}}"#,
+    )
+    .unwrap();
+    let app_structure = DatabaseStructure::from_value(
+        &serde_json::from_str(include_str!("fixtures/database.json")).unwrap(),
+    );
+    let structure = DatabaseStructure::build(&app_structure, &config);
+    let models = build_system_models(&config, &structure);
+
+    let expected: serde_json::Map<String, Value> =
+        serde_json::from_str(include_str!("fixtures/go_models.json")).unwrap();
+
+    let mut names: Vec<_> = models.keys().cloned().collect();
+    let mut expected_names: Vec<_> = expected.keys().cloned().collect();
+    names.sort();
+    expected_names.sort();
+    assert_eq!(names, expected_names);
+
+    let mut mismatches = Vec::new();
+    let mut check = |what: String, go: &Value, rust: Value| {
+        if *go != rust {
+            mismatches.push(format!("{what}: go={go} rust={rust}"));
+        }
+    };
+
+    for (name, model) in &models {
+        let go = &expected[name];
+        let rel = |r: &std::collections::BTreeMap<String, yekonga::model::ForeignKey>| {
+            Value::Object(
+                r.iter()
+                    .map(|(k, v)| {
+                        (
+                            k.clone(),
+                            format!("{}|{}|{}", v.model_name, v.primary_key, v.foreign_key).into(),
+                        )
+                    })
+                    .collect(),
+            )
+        };
+        let sorted = |v: &[String]| {
+            let mut v = v.to_vec();
+            v.sort();
+            serde_json::json!(v)
+        };
+
+        check(
+            format!("{name}.class"),
+            &go["class"],
+            model.class.clone().into(),
+        );
+        check(
+            format!("{name}.collection"),
+            &go["collection"],
+            model.collection.clone().into(),
+        );
+        check(
+            format!("{name}.variable"),
+            &go["variable"],
+            model.variable.clone().into(),
+        );
+        check(
+            format!("{name}.single"),
+            &go["single"],
+            model.variable_single.clone().into(),
+        );
+        check(
+            format!("{name}.plural"),
+            &go["plural"],
+            model.variable_plural.clone().into(),
+        );
+        check(
+            format!("{name}.hasTenant"),
+            &go["hasTenant"],
+            model.has_tenant.into(),
+        );
+        check(
+            format!("{name}.validFields"),
+            &go["validFields"],
+            serde_json::json!(model.valid_fields),
+        );
+        check(
+            format!("{name}.required"),
+            &go["required"],
+            sorted(&model.required),
+        );
+        check(
+            format!("{name}.dateFields"),
+            &go["dateFields"],
+            sorted(&model.date_fields),
+        );
+        check(
+            format!("{name}.parents"),
+            &go["parents"],
+            rel(&model.parent_fields),
+        );
+        check(
+            format!("{name}.children"),
+            &go["children"],
+            rel(&model.children_fields),
+        );
+
+        for (field_name, field) in &model.fields {
+            let gf = &go["fields"][field_name];
+            let fk = match &field.foreign_key {
+                Some(fk) => {
+                    serde_json::json!({"model": fk.model_name, "primary": fk.primary_key, "foreign": fk.foreign_key})
+                }
+                None => serde_json::json!({}),
+            };
+            let actual = serde_json::json!({
+                "kind": field.kind.as_str(), "isArray": field.is_array, "required": field.required,
+                "protected": field.protected, "default": field.default_value, "fk": fk, "options": field.options.len(),
+            });
+            check(format!("{name}.fields.{field_name}"), gf, actual);
+        }
+    }
+
+    assert!(
+        mismatches.is_empty(),
+        "{} mismatches:\n{}",
+        mismatches.len(),
+        mismatches.join("\n")
+    );
+}
