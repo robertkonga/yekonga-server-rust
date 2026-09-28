@@ -57,10 +57,12 @@ gateway providers and the Excel-to-CSV conversion remain.
 | Error guard (`security.errorGuard`, blocks error-flooding clients, persists to `IpAccessRule`) | ✅ |
 | IP whitelist (`IpAccessRule` `whitelist` rows exempt a client from both) | ✅ |
 | Notifications (`notify`): queues `Notification` records per channel; a cron job dispatches them | ✅ |
-| Send functions (`set_send_sms`/`set_send_email`/`set_send_whatsapp`); OTP codes queue as notifications | ✅ delivery providers (Beem/SMTP) not ported — register a sender |
+| Send functions (`set_send_sms`/`set_send_email`/`set_send_whatsapp`); OTP codes queue as notifications | ✅ |
+| Built-in Beem SMS provider (`apiGateway.sms`), used by the dispatch when no `send_sms` hook is set | ✅ |
+| Built-in Infobip WhatsApp provider (`apiGateway.whatsapp`), text messages | ✅ |
 | File uploads (`/upload`, `/upload-files`) and downloads (`/download/:file.:ext`) | ✅ saved under `public/uploads`; image resize not ported |
 | TLS (`ports.secure`): HTTPS on `sslServer` with an HTTP→HTTPS redirect | ✅ certificate at `certificate/cert.pem` + `key.pem` |
-| SMS / WhatsApp / payment gateway providers, `/excel-to-csv` | ⏳ step 5 |
+| Infobip SMS and SMTP mail providers; payment gateway | ⏳ register a send function; payment needs provider credentials |
 | WebSocket JS SDK (`/yekonga.io/yekonga.io.js`) | ⏳ the embedded client script isn't ported |
 
 A tenant id set by a preload middleware (`req.set_tenant_id(...)`) is kept
@@ -228,9 +230,13 @@ everything that runs after it.
   and a cron job (`SystemNotification`, every 10s, when `hasCronjob` is set)
   hands each to `set_send_sms`/`set_send_email`/`set_send_whatsapp`. An OTP
   request queues a notification (or calls a `set_otp_sender` hook if one is
-  registered). The Beem SMS, WhatsApp and SMTP providers themselves aren't
-  ported, so without a registered sender a notification is logged and marked
-  submitted without being sent.
+  registered). The built-in **Beem** SMS provider is ported: when
+  `apiGateway.sms` is configured and no `send_sms` hook is registered, SMS
+  notifications go through it (`apiGateway.sms.baseURL` overrides Beem's host,
+  which Go doesn't allow). The built-in **Infobip** WhatsApp provider is ported
+  too (text messages, `apiGateway.whatsapp`). The Infobip SMS and SMTP mail
+  providers aren't ported, so without a registered sender those notifications
+  are logged and marked submitted without being sent.
 - Auth mutations that only look a user up in Go (`socialLogin`,
   `contactOTP`, `contactVerify`, `resetPassword`, `confirmToken`,
   `changePassword`, `switchAccount`) return "not supported by the Rust port
