@@ -1,0 +1,11 @@
+{
+    "templateName": "registration",
+    "templateData": {
+        "body": {
+            "placeholders": [
+                "{{ appName }}"
+            ]
+        }
+    },
+    "language": "en"
+}

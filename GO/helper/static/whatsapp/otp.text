@@ -1,0 +1,17 @@
+{
+    "templateName": "one_time_password",
+    "templateData": {
+        "body": {
+            "placeholders": [
+                "{{ otpCode }}"
+            ]
+        },
+        "buttons": [
+            {
+                "type": "URL",
+                "parameter": "{{ otpCode }}"
+            }
+        ]
+    },
+    "language": "en_GB"
+}

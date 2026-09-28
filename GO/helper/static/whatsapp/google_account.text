@@ -1,0 +1,11 @@
+{
+    "templateName": "google_account",
+    "templateData": {
+        "body": {
+            "placeholders": [
+                "{{ appName }}"
+            ]
+        }
+    },
+    "language": "en"
+}

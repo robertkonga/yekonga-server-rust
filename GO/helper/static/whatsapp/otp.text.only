@@ -1,0 +1,11 @@
+{
+    "templateName": "otp",
+    "templateData": {
+        "body": {
+            "placeholders": [
+                "{{ otpCode }}"
+            ]
+        }
+    },
+    "language": "en"
+}
