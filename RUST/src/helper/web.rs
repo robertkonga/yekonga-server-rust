@@ -102,16 +102,20 @@ pub fn local_ip() -> Option<String> {
     (!ip.is_loopback() && !ip.is_unspecified()).then(|| ip.to_string())
 }
 
-/// `~/.yekonga-server/<name>`, created if missing. Holds the local database
-/// files and uploads.
-pub fn home_directory(name: &str) -> PathBuf {
+/// `~/.yekonga-server/<name>`: local database files and uploads.
+pub fn home_directory_path(name: &str) -> PathBuf {
     let home = std::env::var_os("HOME")
         .or_else(|| std::env::var_os("USERPROFILE"))
         .map(PathBuf::from)
         .filter(|p| !p.as_os_str().is_empty() && p.as_os_str() != "/")
         .unwrap_or_else(|| PathBuf::from("/root"));
 
-    let dir = home.join(".yekonga-server").join(name);
+    home.join(".yekonga-server").join(name)
+}
+
+/// [`home_directory_path`], created if missing.
+pub fn home_directory(name: &str) -> PathBuf {
+    let dir = home_directory_path(name);
     if let Err(err) = std::fs::create_dir_all(&dir) {
         tracing::error!(dir = %dir.display(), %err, "cannot create home directory");
     }

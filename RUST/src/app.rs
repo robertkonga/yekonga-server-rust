@@ -18,11 +18,14 @@ use http::{Method, StatusCode};
 use tower_http::compression::predicate::{NotForContentType, Predicate, SizeAbove};
 use tower_http::compression::CompressionLayer;
 
-use crate::config::YekongaConfig;
+use crate::config::{DatabaseKind, YekongaConfig};
+use crate::db::{Backend, DbError, LocalBackend, UnsupportedBackend};
 use crate::error::{Error, Result};
-use crate::helper::{home_directory, match_path, to_slug};
+use crate::helper::{home_directory, home_directory_path, match_path, to_slug};
+use crate::lookup::LookupCaches;
 use crate::middleware::{self, Abort, MiddlewareKind, MiddlewareResult};
 use crate::model::{build_system_models, DataModel};
+use crate::query::ModelQuery;
 use crate::request::{header_value, Request, RequestParts};
 use crate::response::{self, Response, PAGE_404, PAGE_INDEX};
 use crate::router::RoutePattern;
@@ -165,12 +168,29 @@ struct Inner {
     public_routes: RwLock<Vec<String>>,
     when_ready: std::sync::Mutex<Vec<Box<dyn FnOnce() + Send>>>,
     token_paths: OnceLock<TokenPaths>,
+    backend: Arc<dyn Backend>,
+    caches: LookupCaches,
 }
 
 impl Yekonga {
     /// Builds a server from a config and the app's own schema (the
     /// framework's built-in collections are added according to the config).
+    ///
+    /// The database is the one `database.kind` selects. Only `local` (the
+    /// default) is ported so far; other kinds log an error and every query
+    /// fails until their backends are ported.
     pub fn new(config: YekongaConfig, app_structure: DatabaseStructure) -> Self {
+        let backend = default_backend(&config);
+        Self::with_backend(config, app_structure, backend)
+    }
+
+    /// Like [`new`](Self::new), with a given database backend (e.g.
+    /// [`LocalBackend::in_memory`] for tests).
+    pub fn with_backend(
+        config: YekongaConfig,
+        app_structure: DatabaseStructure,
+        backend: Arc<dyn Backend>,
+    ) -> Self {
         let database_structure = DatabaseStructure::build(&app_structure, &config);
         let models = build_system_models(&config, &database_structure)
             .into_iter()
@@ -183,7 +203,6 @@ impl Yekonga {
             .unwrap_or_else(|| PathBuf::from("./"));
 
         let app = Yekonga(Arc::new(Inner {
-            config,
             database_structure,
             models,
             root_path,
@@ -194,6 +213,9 @@ impl Yekonga {
             public_routes: RwLock::default(),
             when_ready: std::sync::Mutex::default(),
             token_paths: OnceLock::new(),
+            caches: LookupCaches::new(&config),
+            backend,
+            config,
         }));
 
         app.initialize();
@@ -213,6 +235,23 @@ impl Yekonga {
 
     pub fn config(&self) -> &YekongaConfig {
         &self.0.config
+    }
+
+    /// A query on a model by its singular PascalCase name, e.g. `"Order"`.
+    pub fn query(&self, model: &str) -> std::result::Result<ModelQuery, DbError> {
+        let found = self
+            .model(model)
+            .ok_or_else(|| DbError::UnknownModel(model.to_string()))?;
+        Ok(ModelQuery::new(self.clone(), found))
+    }
+
+    /// The database backend.
+    pub fn backend(&self) -> &Arc<dyn Backend> {
+        &self.0.backend
+    }
+
+    pub(crate) fn caches(&self) -> &LookupCaches {
+        &self.0.caches
     }
 
     /// The merged schema (built-in and app collections).
@@ -818,7 +857,7 @@ impl Yekonga {
             m(req.clone(), res.clone()).await?;
         }
 
-        middleware::run_builtin_auth(&req, &res)?;
+        middleware::run_builtin_auth(&req, &res).await?;
         for kind in [MiddlewareKind::Init, MiddlewareKind::Global] {
             for m in self.middleware_chain(kind) {
                 m(req.clone(), res.clone()).await?;
@@ -846,6 +885,24 @@ impl Yekonga {
         }
 
         Ok(())
+    }
+}
+
+/// The backend `database.kind` selects.
+fn default_backend(config: &YekongaConfig) -> Arc<dyn Backend> {
+    match config.database.kind() {
+        None | Some(DatabaseKind::Local) => {
+            let dir = home_directory_path(&to_slug(&config.app_name)).join("database");
+            tracing::info!(dir = %dir.display(), "using the local database");
+            Arc::new(LocalBackend::open(dir))
+        }
+        Some(kind) => {
+            tracing::error!(
+                kind = kind.as_str(),
+                "this database kind is not ported yet; queries will fail"
+            );
+            Arc::new(UnsupportedBackend(kind.as_str().to_string()))
+        }
     }
 }
 

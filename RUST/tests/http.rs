@@ -8,12 +8,17 @@ use http_body_util::BodyExt;
 use serde_json::{json, Value};
 use tower::ServiceExt;
 use yekonga::{
-    helper::jwt, Abort, DatabaseStructure, MiddlewareKind, StaticConfig, Yekonga, YekongaConfig,
+    helper::jwt, Abort, DatabaseStructure, LocalBackend, MiddlewareKind, StaticConfig, Yekonga,
+    YekongaConfig,
 };
 
 fn app_with(config: Value) -> Yekonga {
     let config: YekongaConfig = serde_json::from_value(config).unwrap();
-    Yekonga::new(config, DatabaseStructure::default())
+    Yekonga::with_backend(
+        config,
+        DatabaseStructure::default(),
+        Arc::new(LocalBackend::in_memory()),
+    )
 }
 
 fn app() -> Yekonga {
@@ -657,7 +662,11 @@ async fn models_are_available() {
     let structure = DatabaseStructure::from_value(
         &json!({"Orders": {"userId": {"type": "ID", "foreignKey": "User.id"}}}),
     );
-    let app = Yekonga::new(YekongaConfig::default(), structure);
+    let app = Yekonga::with_backend(
+        YekongaConfig::default(),
+        structure,
+        Arc::new(LocalBackend::in_memory()),
+    );
 
     let order = app.model("Order").unwrap();
     assert_eq!(order.collection, "orders");

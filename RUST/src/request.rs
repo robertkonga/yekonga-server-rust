@@ -15,6 +15,7 @@ use http::{HeaderMap, Method, Uri, Version};
 use serde_json::{Map, Value};
 
 use crate::app::Yekonga;
+use crate::db::values::is_empty;
 use crate::payload::{AuthPayload, ClientPayload, TokenPayload};
 
 /// Context keys the built-in middleware store values under.
@@ -24,6 +25,7 @@ pub mod keys {
     pub const USER_INFO_PAYLOAD: &str = "userInfoPayload";
     pub const MASTER_KEY: &str = "masterKey";
     pub const CURRENT_TENANT_ID: &str = "currentTenantId";
+    pub const CURRENT_TENANT_CONFIG: &str = "currentTenantConfig";
 }
 
 #[derive(Clone)]
@@ -296,6 +298,15 @@ impl Request {
             .filter(|v| !is_empty(v))
     }
 
+    /// The tenant's TenantConfig record (only its id when it has none), set
+    /// by the tenant middleware.
+    pub fn tenant_config(&self) -> Option<Map<String, Value>> {
+        match self.get_context(keys::CURRENT_TENANT_CONFIG) {
+            Some(Value::Object(map)) => Some(map),
+            _ => None,
+        }
+    }
+
     pub fn set_tenant_id(&self, tenant_id: impl Into<Value>) {
         self.set_context(keys::CURRENT_TENANT_ID, tenant_id);
     }
@@ -349,18 +360,6 @@ pub(crate) fn header_value<'a>(headers: &'a HeaderMap, name: &str) -> &'a str {
         .get(name)
         .and_then(|v| v.to_str().ok())
         .unwrap_or_default()
-}
-
-/// Go's `helper.IsEmpty` for JSON values.
-pub(crate) fn is_empty(value: &Value) -> bool {
-    match value {
-        Value::Null => true,
-        Value::String(s) => s.is_empty(),
-        Value::Array(a) => a.is_empty(),
-        Value::Object(o) => o.is_empty(),
-        Value::Bool(b) => !b,
-        Value::Number(n) => n.as_f64() == Some(0.0),
-    }
 }
 
 #[cfg(test)]

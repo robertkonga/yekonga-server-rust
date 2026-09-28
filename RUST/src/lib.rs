@@ -22,11 +22,14 @@
 
 mod app;
 pub mod config;
+pub mod db;
 mod error;
 pub mod helper;
+mod lookup;
 pub mod middleware;
 pub mod model;
 pub mod payload;
+mod query;
 mod request;
 mod response;
 pub mod router;
@@ -34,11 +37,13 @@ pub mod schema;
 
 pub use app::{BoxFuture, StaticConfig, Yekonga, COOKIE_ENABLED_KEY, DEFAULT_EXTENSIONS};
 pub use config::YekongaConfig;
+pub use db::{DbError, LocalBackend};
 pub use error::{Error, Result};
 pub use middleware::{Abort, MiddlewareKind, MiddlewareResult};
+pub use query::ModelQuery;
 pub use request::{keys, Request};
 pub use response::Response;
 pub use schema::DatabaseStructure;
 
 /// JSON object type used for records and loosely-typed data (Go's `DataMap`).
-pub type DataMap = serde_json::Map<String, serde_json::Value>;
+pub use db::DataMap;

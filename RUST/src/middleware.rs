@@ -14,11 +14,12 @@
 
 use serde_json::{json, Value};
 
+use crate::db::values::is_empty;
 use crate::helper::{
     extract_domain, get_base_url, get_client_ip, get_main_domain, jwt, match_path,
 };
 use crate::payload::{ClientPayload, TokenPayload};
-use crate::request::{bearer_token, is_empty, keys, Request};
+use crate::request::{bearer_token, keys, Request};
 use crate::response::Response;
 
 /// Aborts the request with an HTTP status and message. For 307/308 the
@@ -160,18 +161,47 @@ pub fn client(req: &Request) -> MiddlewareResult {
 
 /// Resolves the tenant from the request's domain.
 ///
-/// Not ported yet: tenant lookups need the database layer. Until then this
-/// only enforces the rule that doesn't need it: with `hasTenant` or
-/// `hasTenantCatch`, a subdomain of the main domain without a known tenant is
-/// rejected. Tenant ids from access tokens are still applied by [`token`].
-pub fn tenant_catch(req: &Request) -> MiddlewareResult {
-    let config = req.app().config();
+/// With `hasTenant`, the Tenant whose domain, subdomain, custom domain or
+/// custom subdomain is the origin's host; its TenantConfig record is
+/// available as [`Request::tenant_config`]. With `hasTenantCatch`, the
+/// TenantCatch record for the host. A subdomain of the main domain without a
+/// tenant is rejected, and with `tenantOnly` so is any request without one.
+///
+/// A tenant id set by a preload middleware is kept when the lookup finds
+/// nothing. (The Go version's `FetchTenantByDomain` cloud-function fallback
+/// arrives with cloud functions.)
+pub async fn tenant_catch(req: &Request) -> MiddlewareResult {
+    let app = req.app();
+    let config = app.config();
     if !(config.has_tenant || config.has_tenant_catch) {
         return Ok(());
     }
 
     let host = req.client().map(|c| c.origin_domain()).unwrap_or_default();
-    let tenant_id = req.tenant_id();
+    let mut tenant_id: Option<Value> = None;
+
+    if config.has_tenant {
+        let records = app.tenant_by_host(&host).await;
+        tenant_id = records
+            .tenant
+            .as_ref()
+            .and_then(|t| t.get("_id"))
+            .cloned()
+            .filter(|v| !is_empty(v));
+
+        if tenant_id.is_some() {
+            let tenant_config = records.config.unwrap_or_else(|| {
+                let mut config = serde_json::Map::new();
+                config.insert("tenantId".into(), tenant_id.clone().unwrap_or(Value::Null));
+                config
+            });
+            req.set_context(keys::CURRENT_TENANT_CONFIG, Value::Object(tenant_config));
+        }
+    } else if let Some(record) = app.tenant_catch_by_domain(&host).await {
+        tenant_id = record.get("tenantId").cloned().filter(|v| !is_empty(v));
+    }
+
+    let tenant_id = tenant_id.or_else(|| req.tenant_id());
 
     if config.has_tenant && config.tenant_only && tenant_id.is_none() {
         return Err(Abort::new(400, "Tenant not found for the request"));
@@ -180,6 +210,14 @@ pub fn tenant_catch(req: &Request) -> MiddlewareResult {
     if let Some(main_domain) = get_main_domain(&host) {
         if host != main_domain && tenant_id.is_none() {
             return Err(Abort::new(404, "Tenant not found"));
+        }
+    }
+
+    if let Some(tenant_id) = tenant_id {
+        req.set_tenant_id(tenant_id.clone());
+        if let Some(mut client) = req.client() {
+            client.tenant_id = tenant_id;
+            req.set_client(client);
         }
     }
 
@@ -293,41 +331,46 @@ pub fn billing(_req: &Request) -> MiddlewareResult {
     Ok(())
 }
 
-/// Stores the signed-in user's info ([`Request::user_info`] / [`Request::auth`])
-/// from the access token's claims.
-///
-/// On an authorization server the Go version loads the user record from the
-/// database instead; that part waits for the database layer, so for now
-/// those servers get no user info.
-pub fn user_info(req: &Request) -> MiddlewareResult {
+/// Stores the signed-in user's info ([`Request::user_info`] / [`Request::auth`]).
+/// An authorization server loads the user's record; other servers use the
+/// access token's claims.
+pub async fn user_info(req: &Request) -> MiddlewareResult {
     let Some(payload) = req.token_payload() else {
         return Ok(());
     };
-
-    if payload.user_id.is_empty() || req.app().config().is_authorization_server {
+    if payload.user_id.is_empty() {
         return Ok(());
     }
 
-    let mut data = payload.to_map();
-    data.insert("_id".into(), json!(payload.user_id));
-    data.insert("id".into(), json!(payload.user_id));
-    req.set_context(keys::USER_INFO_PAYLOAD, Value::Object(data));
+    let info = if req.app().config().is_authorization_server {
+        req.app().user_by_id(&payload.user_id).await
+    } else {
+        let mut data = payload.to_map();
+        data.insert("_id".into(), json!(payload.user_id));
+        data.insert("id".into(), json!(payload.user_id));
+        Some(data)
+    };
+
+    if let Some(info) = info {
+        req.set_context(keys::USER_INFO_PAYLOAD, Value::Object(info));
+    }
 
     Ok(())
 }
 
-/// The built-in steps that run before init middleware, in order.
+/// The built-in steps that run before preload middleware, in order.
 pub(crate) fn run_builtin_head(req: &Request, _res: &Response) -> MiddlewareResult {
     master_key(req)?;
     application_id(req)
 }
 
-pub(crate) fn run_builtin_auth(req: &Request, _res: &Response) -> MiddlewareResult {
+/// The built-in steps between preload and init middleware, in order.
+pub(crate) async fn run_builtin_auth(req: &Request, _res: &Response) -> MiddlewareResult {
     client(req)?;
-    tenant_catch(req)?;
+    tenant_catch(req).await?;
     token(req)?;
     billing(req)?;
-    user_info(req)
+    user_info(req).await
 }
 
 /// Go's `filepath.Ext`: the suffix from the last dot in the final element.
