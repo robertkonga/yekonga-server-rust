@@ -89,6 +89,72 @@ async fn beem_sends_an_sms() {
     assert_eq!(sent.body["recipients"][0]["dest_addr"], "255712345678");
 }
 
+/// A mock Infobip WhatsApp server: records the request and replies with a
+/// pending message.
+async fn mock_whatsapp() -> (SocketAddr, Arc<Mutex<Captured>>) {
+    let captured = Arc::new(Mutex::new(Captured::default()));
+    let state = captured.clone();
+
+    async fn handler(
+        State(captured): State<Arc<Mutex<Captured>>>,
+        headers: HeaderMap,
+        body: String,
+    ) -> ([(&'static str, &'static str); 1], String) {
+        let mut slot = captured.lock().unwrap();
+        slot.authorization = headers
+            .get("authorization")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or_default()
+            .to_string();
+        slot.body = serde_json::from_str(&body).unwrap_or(Value::Null);
+        (
+            [("content-type", "application/json")],
+            json!({"messages": [{"messageId": "wa-1", "status": {"description": "Message accepted"}}]})
+                .to_string(),
+        )
+    }
+
+    let app = Router::new()
+        .route("/whatsapp/1/message/text", post(handler))
+        .with_state(state);
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        axum::serve(listener, app).await.unwrap();
+    });
+    (addr, captured)
+}
+
+#[tokio::test]
+async fn infobip_sends_a_whatsapp_message() {
+    let (addr, captured) = mock_whatsapp().await;
+    let config: YekongaConfig = serde_json::from_value(json!({
+        "authentication": {"secretToken": "s"},
+        "apiGateway": {"whatsapp": {
+            "provider": "infobip",
+            "baseURL": format!("http://{addr}"),
+            "sender": "44770",
+            "apiKey": "wakey",
+        }}
+    }))
+    .unwrap();
+    let app = Yekonga::with_backend(
+        config,
+        DatabaseStructure::from_value(&json!({})),
+        Arc::new(LocalBackend::in_memory()),
+    );
+
+    let response = app.send_whatsapp_builtin("255712345678", "habari").await;
+    assert_eq!(response.status, "SUCCESS", "{}", response.message);
+    assert_eq!(response.message_id, "wa-1");
+
+    let sent = captured.lock().unwrap();
+    assert_eq!(sent.authorization, "App wakey");
+    assert_eq!(sent.body["from"], "44770");
+    assert_eq!(sent.body["to"], "255712345678");
+    assert_eq!(sent.body["content"]["text"], "habari");
+}
+
 #[tokio::test]
 async fn unknown_provider_fails() {
     let config: YekongaConfig = serde_json::from_value(json!({

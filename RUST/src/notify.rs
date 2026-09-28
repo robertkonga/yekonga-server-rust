@@ -234,6 +234,13 @@ impl Yekonga {
             }
             return;
         }
+        if channel == "WhatsApp" && !self.config().api_gateway.whatsapp.api_key.is_empty() {
+            let result = self.send_whatsapp_builtin(&recipient, &content).await;
+            if result.status != "SUCCESS" {
+                tracing::warn!(channel, recipient, message = %result.message, "WhatsApp send failed");
+            }
+            return;
+        }
 
         tracing::warn!(
             channel,
