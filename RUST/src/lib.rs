@@ -24,6 +24,7 @@ mod app;
 pub mod config;
 pub mod db;
 mod error;
+pub mod graphql;
 pub mod helper;
 mod lookup;
 pub mod middleware;
@@ -32,6 +33,7 @@ pub mod payload;
 mod query;
 mod request;
 mod response;
+mod rest;
 pub mod router;
 pub mod schema;
 

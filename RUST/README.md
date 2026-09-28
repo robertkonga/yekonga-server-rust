@@ -5,8 +5,9 @@ A Rust port of the Go framework in [`../GO`](../GO). It reads the same
 behavior, including its route patterns, middleware order, error responses
 and access tokens.
 
-The port is being done in steps. Steps 1 (the foundation) and 2 (the query
-builder and all four database backends) are done.
+The port is being done in steps. Step 1 (the foundation), step 2 (the query
+builder and all four database backends) and most of step 3 (GraphQL and
+REST) are done.
 
 ## Status
 
@@ -27,7 +28,12 @@ builder and all four database backends) are done.
 | Tenant scoping of queries made with a request | ✅ |
 | MongoDB (`database.kind: "mongodb"`), including startup indexes | ✅ shares a database with the Go server (see below) |
 | MySQL (`database.kind: "mysql"` or `"sql"`), with table/column migration and indexes | ✅ shares a database with the Go server (see below) |
-| REST API (`restAPI`) and auto-generated GraphQL | ⏳ step 3 |
+| Auto-generated GraphQL schema (`graphql.apiRoute`) | ✅ identical to Go's (see below) |
+| GraphQL queries: single, list, paginate, summary (count/sum/max/min/average), relations in both directions | ✅ |
+| GraphQL mutations: create (with nested children), update, delete, import | ✅ |
+| REST API (`restApiEnabled`, `/api/:model…`) | ✅ |
+| GraphQL `groupBy`/`distinct`, summary `graph`, `download…`, `…Action`, custom fields | ⏳ return "not supported by the Rust port yet" |
+| Auth GraphQL schema (`graphql.apiAuthRoute`) and auth endpoints | ⏳ step 3 |
 | Auth endpoints (`/me`, `/logout`, `/refresh`, login/OTP) | ⏳ step 3 |
 | Cloud functions, DB triggers, cron jobs, WebSocket / Socket.IO | ⏳ step 4 |
 | SMS / WhatsApp / payment gateways, mail, uploads, rate limit, error guard, TLS | ⏳ step 5 |
@@ -129,10 +135,41 @@ everything that runs after it.
   backend compares the whole JSON text, so `tags = "x"` never matches there.
   String comparisons on MySQL follow the column's collation, which ignores
   case and accents by default. This is the same in Go.
+- The REST write routes (`POST /api/:model/create`, `PUT`, `PATCH`,
+  `…/update/:id`, `DELETE`, `…/delete/:id`) create, update and delete. In
+  Go they send malformed GraphQL (a query named `createOrders` without the
+  input), so only the GET routes work there.
+- GraphQL mutation results hide protected fields (`--protected--`), as
+  query results do. Go returns them in plain text, e.g. a user's password
+  hash from `createUser`.
+- Lists and objects written directly in a GraphQL query (`tags: ["x"]`) are
+  stored as values. Go stores the parser's internal nodes, including a
+  base64 copy of the query text. Values passed as variables work in both.
+- GraphQL validation errors other than unknown fields keep the GraphQL
+  library's wording. For example, a missing required input field is reported
+  as `field "title" of type "String!" is required but not provided`, where
+  Go says `In field "title": Expected "String!", found null.`
+- Relation fields are resolved one query at a time. Go batches them on
+  MongoDB; the results are the same.
 - Database triggers, the audit trail and socket change events are not run
   yet (step 4).
 - The client IP falls back to the connection's address when there is no
   `X-Forwarded-For` or `X-Real-Ip` header.
+
+## GraphQL compatibility
+
+The schema is built with the same type, field, argument and enum names as
+the Go server. `tests/go_parity.rs` compares it against Go's introspection
+output (`tests/fixtures/go_graphql_schema.txt`: 533 types, 6,512 lines), and
+against a hash of the schema with every module enabled (1,294 types). Both
+match exactly.
+
+The resolvers were checked the same way, with both servers on one MongoDB
+database. 19 queries covered filters, sorting, paging, relations in both
+directions, nested pagination and summaries, self-relations, protected and
+date fields, variables and error messages. All 19 returned identical JSON.
+Of 9 mutations, the ones that differed are the Go bugs and the error wording
+listed below.
 
 ## Sharing a database with the Go server
 
