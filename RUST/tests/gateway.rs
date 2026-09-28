@@ -155,6 +155,91 @@ async fn infobip_sends_a_whatsapp_message() {
     assert_eq!(sent.body["content"]["text"], "habari");
 }
 
+/// A minimal SMTP server that accepts one message and returns its DATA
+/// payload. Speaks just enough of the protocol for lettre's plain transport.
+async fn mock_smtp() -> (SocketAddr, tokio::sync::oneshot::Receiver<String>) {
+    use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let (tx, rx) = tokio::sync::oneshot::channel();
+
+    tokio::spawn(async move {
+        let (socket, _) = listener.accept().await.unwrap();
+        let (read, mut write) = socket.into_split();
+        let mut reader = BufReader::new(read);
+        let mut line = String::new();
+
+        write.write_all(b"220 mock ESMTP\r\n").await.unwrap();
+        let mut data = String::new();
+        loop {
+            line.clear();
+            if reader.read_line(&mut line).await.unwrap() == 0 {
+                break;
+            }
+            let command = line.trim_end().to_uppercase();
+            if command.starts_with("EHLO") || command.starts_with("HELO") {
+                write.write_all(b"250 mock\r\n").await.unwrap();
+            } else if command.starts_with("MAIL") || command.starts_with("RCPT") {
+                write.write_all(b"250 OK\r\n").await.unwrap();
+            } else if command == "DATA" {
+                write
+                    .write_all(b"354 End data with <CR><LF>.<CR><LF>\r\n")
+                    .await
+                    .unwrap();
+                loop {
+                    line.clear();
+                    if reader.read_line(&mut line).await.unwrap() == 0 {
+                        break;
+                    }
+                    if line.trim_end() == "." {
+                        break;
+                    }
+                    data.push_str(&line);
+                }
+                write.write_all(b"250 OK: queued\r\n").await.unwrap();
+            } else if command == "QUIT" {
+                write.write_all(b"221 Bye\r\n").await.unwrap();
+                break;
+            } else {
+                write.write_all(b"250 OK\r\n").await.unwrap();
+            }
+        }
+        let _ = tx.send(data);
+    });
+
+    (addr, rx)
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn smtp_sends_an_email() {
+    let (addr, rx) = mock_smtp().await;
+    let config: YekongaConfig = serde_json::from_value(json!({
+        "authentication": {"secretToken": "s"},
+        "mail": {"smtp": {
+            "host": addr.ip().to_string(),
+            "port": addr.port(),
+            "secure": false,
+            "from": "no-reply@shop.tz",
+        }}
+    }))
+    .unwrap();
+    let app = Yekonga::with_backend(
+        config,
+        DatabaseStructure::from_value(&json!({})),
+        Arc::new(LocalBackend::in_memory()),
+    );
+
+    let response = app
+        .send_email_builtin("user@example.com", "Welcome", "<b>Hello</b>")
+        .await;
+    assert_eq!(response.status, "SUCCESS", "{}", response.message);
+
+    let data = rx.await.unwrap();
+    assert!(data.contains("Subject: Welcome"), "{data}");
+    assert!(data.contains("<b>Hello</b>"), "{data}");
+}
+
 #[tokio::test]
 async fn unknown_provider_fails() {
     let config: YekongaConfig = serde_json::from_value(json!({

@@ -227,6 +227,16 @@ impl Yekonga {
         // No registered hook: use a built-in provider where one exists.
         let recipient = crate::auth::string_of(note.get("recipient"));
         let content = crate::auth::string_of(note.get("content"));
+        if channel == "email" && !self.config().mail.smtp.host.is_empty() {
+            let subject = crate::auth::string_of(note.get("title"));
+            let result = self
+                .send_email_builtin(&recipient, &subject, &content)
+                .await;
+            if result.status != "SUCCESS" {
+                tracing::warn!(channel, recipient, message = %result.message, "email send failed");
+            }
+            return;
+        }
         if channel == "SMS" && !self.config().api_gateway.sms.api_key.is_empty() {
             let result = self.send_sms_builtin(&recipient, &content).await;
             if result.status != "SUCCESS" {
