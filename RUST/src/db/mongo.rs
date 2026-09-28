@@ -19,7 +19,7 @@ use tokio::sync::OnceCell;
 
 use super::filter::{Cond, Filter, Operand};
 use super::values::{format_datetime, parse_datetime, ZERO_OBJECT_ID};
-use super::{Aggregate, Backend, DataMap, DbError, DbFuture, Query, SortOrder};
+use super::{model_indexes, Aggregate, Backend, DataMap, DbError, DbFuture, Query, SortOrder};
 use crate::config::DatabaseConfig;
 use crate::model::{DataModel, FieldKind, TENANT_ID_KEY};
 
@@ -154,27 +154,6 @@ impl MongoBackend {
 
         Ok(created)
     }
-}
-
-/// `(field, unique)` for each index a model needs, sorted by field.
-pub fn model_indexes(model: &DataModel) -> Vec<(String, bool)> {
-    let mut indexes: Vec<(String, bool)> = model
-        .fields
-        .iter()
-        .filter(|(name, field)| *name != "id" && *name != "_id" && !field.primary_key)
-        .filter_map(|(name, field)| {
-            if field.unique {
-                Some((name.clone(), true))
-            } else if field.index || name == TENANT_ID_KEY || field.foreign_key.is_some() {
-                Some((name.clone(), false))
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    indexes.sort();
-    indexes
 }
 
 fn command_code(error: &mongodb::error::Error) -> Option<i32> {
