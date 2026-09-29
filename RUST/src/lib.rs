@@ -36,6 +36,7 @@ pub mod middleware;
 pub mod model;
 pub mod notify;
 pub mod payload;
+pub mod payment;
 mod query;
 mod request;
 mod response;

@@ -178,6 +178,7 @@ struct Inner {
     sockets: crate::socket::SocketServer,
     security: crate::security::Security,
     send_functions: RwLock<crate::notify::SendFunctions>,
+    payment_hooks: RwLock<crate::payment::PaymentHooks>,
 }
 
 impl Yekonga {
@@ -230,6 +231,7 @@ impl Yekonga {
             sockets: crate::socket::SocketServer::new(),
             security: crate::security::Security::default(),
             send_functions: RwLock::default(),
+            payment_hooks: RwLock::default(),
             backend,
             config,
         }));
@@ -305,6 +307,10 @@ impl Yekonga {
 
     pub(crate) fn send_functions(&self) -> &RwLock<crate::notify::SendFunctions> {
         &self.0.send_functions
+    }
+
+    pub(crate) fn payment_hooks(&self) -> &RwLock<crate::payment::PaymentHooks> {
+        &self.0.payment_hooks
     }
 
     /// The WebSocket server (change events and Socket.IO-style messaging).
@@ -758,6 +764,7 @@ impl Yekonga {
         crate::rest::register_graphql_route(self);
         crate::rest::register_rest_routes(self);
         crate::upload::register_routes(self);
+        crate::payment::register_routes(self);
 
         for public in &self.0.config.public {
             match self.resolve_public_directory(public) {

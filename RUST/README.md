@@ -64,7 +64,8 @@ gateway providers and the Excel-to-CSV conversion remain.
 | Built-in SMTP mail sender (`mail.smtp`), HTML email | ✅ |
 | File uploads (`/upload`, `/upload-files`) and downloads (`/download/:file.:ext`) | ✅ saved under `public/uploads`; image resize not ported |
 | TLS (`ports.secure`): HTTPS on `sslServer` with an HTTP→HTTPS redirect | ✅ certificate at `certificate/cert.pem` + `key.pem` |
-| Infobip SMS provider, template/media WhatsApp messages; payment gateway | ⏳ register a send function; payment needs provider credentials |
+| Payment webhooks (`<webhookRoute>/:provider[/:tenantId]`) with a pluggable verifier | ✅ `set_payment_verify` authenticates, the `Payment` record is updated safely, `set_payment_webhook` runs after |
+| Infobip SMS provider, template/media WhatsApp messages; payment provider clients (charge/refund/verify + signature checking) | ⏳ register a send function / a payment verifier; provider clients need credentials |
 | WebSocket JS SDK (`/yekonga.io/yekonga.io.js`) | ⏳ the embedded client script isn't ported |
 
 A tenant id set by a preload middleware (`req.set_tenant_id(...)`) is kept
@@ -161,6 +162,22 @@ everything that runs after it.
   (PDF/Excel) aren't ported. A model's `…Action` mutation runs a handler
   registered with `set_graphql_action` (like Go's `Action`); with none
   registered it errors.
+- Payment webhooks are served at `<webhookRoute>/:provider` and
+  `<webhookRoute>/:provider/:tenantId` (default `webhookRoute` is
+  `/payment/webhook`) when payments are in use (`apiGateway.payment.providers`,
+  `hasPaymentModule`, or tenant billing). Go's `payment.Controller` verifies
+  each provider's signature with the provider's own SDK; those clients aren't
+  ported, so verification is a function you register with `set_payment_verify`
+  — it authenticates the raw request into a `WebhookEvent` (or returns a
+  `WebhookError` → 401/404/400/500). With none registered, every webhook is
+  refused with `501`, so an unverified notification can never settle a payment.
+  Once verified, the framework applies the result to the `Payment` record
+  exactly as Go does: it matches within the same provider and tenant
+  credentials, never moves a payment back from succeeded/refunded, records a
+  success whose amount or currency differs from the invoice as failed, and
+  no-ops on repeated deliveries; then `set_payment_webhook` runs (returning an
+  error answers `500` so the gateway retries). The provider clients themselves
+  (charge/refund/verify) aren't ported.
 - `security.rateLimit`, `security.errorGuard` and the `IpAccessRule`
   whitelist are enforced. The rate limiter is a per-client token bucket; the
   error guard blocks a client that sends more than `requestsPerSecond` error
