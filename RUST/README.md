@@ -67,7 +67,8 @@ gateway providers and the Excel-to-CSV conversion remain.
 | TLS (`ports.secure`): HTTPS on `sslServer` with an HTTP→HTTPS redirect | ✅ certificate at `certificate/cert.pem` + `key.pem` |
 | Payment webhooks (`<webhookRoute>/:provider[/:tenantId]`) with a pluggable verifier | ✅ `set_payment_verify` authenticates, the `Payment` record is updated safely, `set_payment_webhook` runs after |
 | Built-in **Stripe** provider: `create_payment` (Checkout), `verify_payment`, `refund`, and webhook signature verification | ✅ configure `apiGateway.payment.providers` with `secret_key`/`webhook_secret` |
-| Other payment provider clients (azampay, clickpesa, flutterwave, paypal, pesapal, selcom, twocheckout) | ⏳ register a payment verifier; each needs credentials |
+| Built-in **Selcom** provider: `create_payment` (Checkout), `push_ussd` (wallet), `verify_payment`, and signed requests | ✅ configure with `api_key`/`api_secret`/`vendor` |
+| Other payment provider clients (azampay, clickpesa, flutterwave, paypal, pesapal, twocheckout) | ⏳ register a payment verifier; each needs credentials |
 | WebSocket JS SDK (`/yekonga.io/yekonga.io.js`) | ⏳ the embedded client script isn't ported |
 
 A tenant id set by a preload middleware (`req.set_tenant_id(...)`) is kept
@@ -191,9 +192,18 @@ everything that runs after it.
   on the `whsec_...` secret, 5-minute tolerance) so a configured Stripe gateway
   needs no `set_payment_verify`. Configure it under
   `apiGateway.payment.providers` with `secret_key` (and `webhook_secret` for
-  webhooks); `baseURL` overrides the API host. The other providers (azampay,
-  clickpesa, flutterwave, paypal, pesapal, selcom, twocheckout) aren't ported
-  yet — register a `set_payment_verify` for their webhooks.
+  webhooks); `baseURL` overrides the API host.
+- The **Selcom** provider client is ported (`gateway/payment/selcom.go`):
+  `create_payment` opens a hosted Checkout order, `push_ussd` triggers a wallet
+  debit prompt, and `verify_payment` reads the checkout order status (falling
+  back to the wallet C2B status query). Every request is signed (HMAC-SHA256
+  over the ordered `timestamp=…&field=value…` fields, carried in the
+  `Digest`/`Signed-Fields` headers). Selcom's callback has no signature, so its
+  `parse_webhook` re-queries the order status to authenticate it. Configure it
+  with `api_key`/`api_secret`/`vendor`; refunds aren't offered by Selcom's API.
+  The other providers (azampay, clickpesa, flutterwave, paypal, pesapal,
+  twocheckout) aren't ported yet — register a `set_payment_verify` for their
+  webhooks.
 - `security.rateLimit`, `security.errorGuard` and the `IpAccessRule`
   whitelist are enforced. The rate limiter is a per-client token bucket; the
   error guard blocks a client that sends more than `requestsPerSecond` error
