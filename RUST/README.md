@@ -59,13 +59,14 @@ gateway providers and the Excel-to-CSV conversion remain.
 | IP whitelist (`IpAccessRule` `whitelist` rows exempt a client from both) | ✅ |
 | Notifications (`notify`): queues `Notification` records per channel; a cron job dispatches them | ✅ |
 | Send functions (`set_send_sms`/`set_send_email`/`set_send_whatsapp`); OTP codes queue as notifications | ✅ |
-| Built-in Beem SMS provider (`apiGateway.sms`), used by the dispatch when no `send_sms` hook is set | ✅ |
+| Built-in Beem and Infobip SMS providers (`apiGateway.sms`), used by the dispatch when no `send_sms` hook is set | ✅ |
+| Infobip delivery-status callback (`/infobip/:channel/notification`) updates a notification's status/`isSeen` | ✅ |
 | Built-in Infobip WhatsApp provider (`apiGateway.whatsapp`): text, template, media and raw-content messages | ✅ |
 | Built-in SMTP mail sender (`mail.smtp`), HTML email | ✅ |
 | File uploads (`/upload`, `/upload-files`) and downloads (`/download/:file.:ext`) | ✅ saved under `public/uploads`; image resize not ported |
 | TLS (`ports.secure`): HTTPS on `sslServer` with an HTTP→HTTPS redirect | ✅ certificate at `certificate/cert.pem` + `key.pem` |
 | Payment webhooks (`<webhookRoute>/:provider[/:tenantId]`) with a pluggable verifier | ✅ `set_payment_verify` authenticates, the `Payment` record is updated safely, `set_payment_webhook` runs after |
-| Infobip SMS provider; payment provider clients (charge/refund/verify + signature checking) | ⏳ register a send function / a payment verifier; provider clients need credentials |
+| Payment provider clients (charge/refund/verify + signature checking) | ⏳ register a payment verifier; provider clients need credentials |
 | WebSocket JS SDK (`/yekonga.io/yekonga.io.js`) | ⏳ the embedded client script isn't ported |
 
 A tenant id set by a preload middleware (`req.set_tenant_id(...)`) is kept
@@ -254,17 +255,20 @@ everything that runs after it.
   and a cron job (`SystemNotification`, every 10s, when `hasCronjob` is set)
   hands each to `set_send_sms`/`set_send_email`/`set_send_whatsapp`. An OTP
   request queues a notification (or calls a `set_otp_sender` hook if one is
-  registered). The built-in **Beem** SMS provider is ported: when
-  `apiGateway.sms` is configured and no `send_sms` hook is registered, SMS
-  notifications go through it (`apiGateway.sms.baseURL` overrides Beem's host,
-  which Go doesn't allow). The built-in **Infobip** WhatsApp provider
-  (`apiGateway.whatsapp`) and the **SMTP** mail sender (`mail.smtp`, HTML email
-  via `lettre`) are ported too. The WhatsApp provider sends text, template,
-  media and raw-content messages (`send_whatsapp_content`, or a `WhatsApp`
-  notification whose `content` is a JSON object — sent as a template body, as
-  Go's dispatch does). The Infobip SMS provider isn't ported; without a
-  registered sender those notifications are logged and marked submitted
-  without being sent.
+  registered). The built-in **Beem** and **Infobip** SMS providers are ported:
+  when `apiGateway.sms` is configured (`provider: "beem"` or `"infobip"`) and no
+  `send_sms` hook is registered, SMS notifications go through the matching one
+  (`apiGateway.sms.baseURL` overrides the host, which Go doesn't allow for
+  Beem). The built-in **Infobip** WhatsApp provider (`apiGateway.whatsapp`) and
+  the **SMTP** mail sender (`mail.smtp`, HTML email via `lettre`) are ported
+  too. The WhatsApp provider sends text, template, media and raw-content
+  messages (`send_whatsapp_content`, or a `WhatsApp` notification whose
+  `content` is a JSON object — sent as a template body, as Go's dispatch does).
+  A successful built-in send stores the provider's message id on the
+  notification's `responseReference`, and Infobip delivery reports posted to
+  `/infobip/:channel/notification` update that notification's `status`
+  (`delivered`/`undelivered`) and `isSeen` — Go computed this mapping but only
+  logged it; the port persists it.
 - Auth mutations that only look a user up in Go (`socialLogin`,
   `contactOTP`, `contactVerify`, `resetPassword`, `confirmToken`,
   `changePassword`, `switchAccount`) return "not supported by the Rust port

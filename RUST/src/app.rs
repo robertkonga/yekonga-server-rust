@@ -765,6 +765,7 @@ impl Yekonga {
         crate::rest::register_rest_routes(self);
         crate::upload::register_routes(self);
         crate::payment::register_routes(self);
+        crate::gateway::register_routes(self);
 
         for public in &self.0.config.public {
             match self.resolve_public_directory(public) {
