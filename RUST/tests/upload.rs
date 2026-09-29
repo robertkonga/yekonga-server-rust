@@ -96,6 +96,72 @@ async fn upload_single_file() {
     assert_eq!(std::fs::read(path).unwrap(), b"image-bytes");
 }
 
+/// Encodes a solid-colour PNG of the given size.
+fn png(width: u32, height: u32) -> Vec<u8> {
+    let image = image::DynamicImage::ImageRgb8(image::RgbImage::from_pixel(
+        width,
+        height,
+        image::Rgb([12, 34, 56]),
+    ));
+    let mut buffer = std::io::Cursor::new(Vec::new());
+    image
+        .write_to(&mut buffer, image::ImageFormat::Png)
+        .unwrap();
+    buffer.into_inner()
+}
+
+fn saved_bytes(url: &str) -> Vec<u8> {
+    let name = url.rsplit('/').next().unwrap();
+    let path = std::env::current_dir()
+        .unwrap()
+        .join("public/uploads")
+        .join(name);
+    std::fs::read(path).unwrap()
+}
+
+#[tokio::test]
+async fn upload_resizes_a_wide_image_to_webp() {
+    setup();
+    let app = app();
+    let (content_type, body) = multipart(&[("file", "banner.png", &png(2000, 500))]);
+    let request = HttpRequest::post("/upload")
+        .header("content-type", content_type)
+        .header("host", "shop.tz")
+        .body(Body::from(body))
+        .unwrap();
+
+    let (status, json, _) = call(&app, request).await;
+    assert_eq!(status, 200, "{json}");
+    let url = json["files"][0].as_str().unwrap();
+    assert!(url.ends_with(".webp"), "image is re-encoded as webp: {url}");
+
+    // Saved as a valid WebP, shrunk to fit 1400px wide (aspect preserved).
+    let decoded = image::load_from_memory(&saved_bytes(url)).unwrap();
+    assert_eq!(decoded.width(), 1400);
+    assert_eq!(decoded.height(), 350);
+}
+
+#[tokio::test]
+async fn upload_keeps_a_small_image_size() {
+    setup();
+    let app = app();
+    let (content_type, body) = multipart(&[("file", "avatar.jpg", &png(300, 200))]);
+    let request = HttpRequest::post("/upload")
+        .header("content-type", content_type)
+        .header("host", "shop.tz")
+        .body(Body::from(body))
+        .unwrap();
+
+    let (status, json, _) = call(&app, request).await;
+    assert_eq!(status, 200, "{json}");
+    let url = json["files"][0].as_str().unwrap();
+    assert!(url.ends_with(".webp"), "{url}");
+
+    // Below the max width, so its dimensions are unchanged (never upscaled).
+    let decoded = image::load_from_memory(&saved_bytes(url)).unwrap();
+    assert_eq!((decoded.width(), decoded.height()), (300, 200));
+}
+
 #[tokio::test]
 async fn upload_multiple_files() {
     setup();
