@@ -33,6 +33,7 @@ use bytes::Bytes;
 use serde_json::{json, Map, Value};
 
 use crate::app::{BoxFuture, Yekonga};
+use crate::config::PaymentProviderConfig;
 use crate::db::values::is_empty;
 use crate::db::DataMap;
 use crate::request::Request;
@@ -92,6 +93,139 @@ impl WebhookEvent {
             .as_ref()
             .map(|r| r.status == STATUS_SUCCEEDED)
             .unwrap_or(false)
+    }
+}
+
+mod stripe;
+
+/// The customer a payment is for (Go's `payment.Customer`).
+#[derive(Clone, Debug, Default)]
+pub struct Customer {
+    pub name: String,
+    pub email: String,
+    pub phone: String,
+    pub country_code: String,
+}
+
+/// A request to open a hosted checkout (Go's `payment.PaymentRequest`).
+#[derive(Clone, Debug, Default)]
+pub struct PaymentRequest {
+    /// The merchant reference — usually the `Payment` record id.
+    pub reference: String,
+    pub amount: f64,
+    /// ISO 4217 currency.
+    pub currency: String,
+    pub description: String,
+    pub customer: Customer,
+    /// Where the payer lands after paying.
+    pub return_url: String,
+    /// Where the payer lands after cancelling (falls back to `return_url`).
+    pub cancel_url: String,
+    /// Echoed back by providers that support it.
+    pub metadata: Map<String, Value>,
+}
+
+/// The outcome of [`create_payment`](Yekonga::create_payment).
+#[derive(Clone, Debug)]
+pub struct PaymentResponse {
+    pub provider: String,
+    pub reference: String,
+    /// The gateway's id for the checkout/order.
+    pub provider_ref: String,
+    /// The URL to redirect the payer to.
+    pub checkout_url: String,
+    pub status: String,
+    pub raw: Value,
+}
+
+/// A request to refund a settled payment (Go's `payment.RefundRequest`).
+#[derive(Clone, Debug, Default)]
+pub struct RefundRequest {
+    /// The `provider_payment_id` from the settled payment.
+    pub provider_payment_id: String,
+    /// `0` means a full refund where the gateway supports it.
+    pub amount: f64,
+    pub currency: String,
+    pub reason: String,
+}
+
+/// The outcome of [`refund`](Yekonga::refund).
+#[derive(Clone, Debug)]
+pub struct RefundResult {
+    pub provider: String,
+    pub provider_refund_id: String,
+    pub status: String,
+    pub raw: Value,
+}
+
+/// A gateway call failure (Go's `payment.ProviderError`).
+#[derive(Clone, Debug)]
+pub struct ProviderError {
+    pub provider: String,
+    pub code: String,
+    pub message: String,
+}
+
+impl std::fmt::Display for ProviderError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.code.is_empty() {
+            write!(f, "{}: {}", self.provider, self.message)
+        } else {
+            write!(f, "{} [{}]: {}", self.provider, self.code, self.message)
+        }
+    }
+}
+
+impl std::error::Error for ProviderError {}
+
+/// A configured payment provider client. New providers add a variant and the
+/// matching arms below.
+enum Provider {
+    Stripe(stripe::Stripe),
+}
+
+impl Provider {
+    /// Builds the client for a configured gateway, or `None` when the provider
+    /// isn't ported or its credentials are missing.
+    fn from_config(config: &PaymentProviderConfig) -> Option<Self> {
+        match config.provider.as_str() {
+            "stripe" => stripe::Stripe::new(config).map(Provider::Stripe),
+            _ => None,
+        }
+    }
+
+    async fn create_payment(&self, req: &PaymentRequest) -> Result<PaymentResponse, ProviderError> {
+        match self {
+            Provider::Stripe(stripe) => stripe.create_payment(req).await,
+        }
+    }
+
+    async fn verify_payment(&self, provider_ref: &str) -> Result<PaymentResult, ProviderError> {
+        match self {
+            Provider::Stripe(stripe) => stripe.verify_payment(provider_ref).await,
+        }
+    }
+
+    async fn refund(&self, req: &RefundRequest) -> Result<RefundResult, ProviderError> {
+        match self {
+            Provider::Stripe(stripe) => stripe.refund(req).await,
+        }
+    }
+
+    fn parse_webhook(
+        &self,
+        headers: &axum::http::HeaderMap,
+        body: &[u8],
+    ) -> Result<WebhookEvent, WebhookError> {
+        match self {
+            Provider::Stripe(stripe) => {
+                let signature = headers
+                    .get("stripe-signature")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                stripe.parse_webhook(signature, body)
+            }
+        }
     }
 }
 
@@ -207,6 +341,60 @@ impl Yekonga {
             || config.has_payment_module
             || (config.has_tenant && config.has_tenant_billing)
     }
+
+    /// The built-in client for the named configured provider (`apiGateway.payment.providers`),
+    /// or `None` when it isn't configured or isn't a ported provider. Only
+    /// Stripe is ported so far.
+    fn payment_provider(&self, name: &str) -> Option<Provider> {
+        self.config()
+            .api_gateway
+            .payment
+            .providers
+            .iter()
+            .find(|p| p.provider.eq_ignore_ascii_case(name))
+            .and_then(Provider::from_config)
+    }
+
+    /// Opens a hosted checkout with the named provider (Go's `CreatePayment`).
+    pub async fn create_payment(
+        &self,
+        provider: &str,
+        request: PaymentRequest,
+    ) -> Result<PaymentResponse, ProviderError> {
+        self.require_provider(provider)?
+            .create_payment(&request)
+            .await
+    }
+
+    /// Asks the named provider for a payment's current state, by the gateway's
+    /// checkout/order reference (Go's `VerifyPayment`).
+    pub async fn verify_payment(
+        &self,
+        provider: &str,
+        provider_ref: &str,
+    ) -> Result<PaymentResult, ProviderError> {
+        self.require_provider(provider)?
+            .verify_payment(provider_ref)
+            .await
+    }
+
+    /// Refunds a settled payment through the named provider (Go's `Refund`).
+    pub async fn refund(
+        &self,
+        provider: &str,
+        request: RefundRequest,
+    ) -> Result<RefundResult, ProviderError> {
+        self.require_provider(provider)?.refund(&request).await
+    }
+
+    fn require_provider(&self, provider: &str) -> Result<Provider, ProviderError> {
+        self.payment_provider(provider)
+            .ok_or_else(|| ProviderError {
+                provider: provider.to_string(),
+                code: String::new(),
+                message: format!("payment provider {provider:?} is not configured or not ported"),
+            })
+    }
 }
 
 /// Serves provider notifications when payments are in use (Go's
@@ -237,35 +425,45 @@ async fn handle(req: Request, res: Response) {
     let provider = req.param("provider");
     let tenant_id = req.param("tenantId");
 
-    let Some(verify) = app
+    let verify = app
         .payment_hooks()
         .read()
         .unwrap_or_else(|e| e.into_inner())
         .verify
-        .clone()
-    else {
-        // No verifier: refuse rather than trust an unauthenticated webhook.
+        .clone();
+
+    // A registered verifier wins; otherwise the built-in client for the
+    // configured provider authenticates the request. With neither, refuse
+    // rather than trust an unauthenticated webhook.
+    let event = if let Some(verify) = verify {
+        let context = PaymentVerifyContext {
+            provider: provider.clone(),
+            tenant_id: tenant_id.clone(),
+            method: req.method().clone(),
+            headers: req.headers().clone(),
+            body: req.raw_body().clone(),
+        };
+        match verify(context).await {
+            Ok(event) => event,
+            Err(error) => {
+                tracing::error!(provider, ?error, "payment webhook rejected");
+                return reject(&req, &res, error.status());
+            }
+        }
+    } else if let Some(client) = app.payment_provider(&provider) {
+        match client.parse_webhook(req.headers(), req.raw_body()) {
+            Ok(event) => event,
+            Err(error) => {
+                tracing::error!(provider, ?error, "payment webhook rejected");
+                return reject(&req, &res, error.status());
+            }
+        }
+    } else {
         tracing::error!(
             provider,
             "payment webhook received but no verifier is registered"
         );
         return reject(&req, &res, 501);
-    };
-
-    let context = PaymentVerifyContext {
-        provider: provider.clone(),
-        tenant_id: tenant_id.clone(),
-        method: req.method().clone(),
-        headers: req.headers().clone(),
-        body: req.raw_body().clone(),
-    };
-
-    let event = match verify(context).await {
-        Ok(event) => event,
-        Err(error) => {
-            tracing::error!(provider, ?error, "payment webhook rejected");
-            return reject(&req, &res, error.status());
-        }
     };
 
     let mut record = None;
