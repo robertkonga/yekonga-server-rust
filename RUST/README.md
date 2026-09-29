@@ -66,7 +66,8 @@ gateway providers and the Excel-to-CSV conversion remain.
 | File uploads (`/upload`, `/upload-files`) and downloads (`/download/:file.:ext`) | ✅ saved under `public/uploads`; images resized to 1400px wide and re-encoded as WebP |
 | TLS (`ports.secure`): HTTPS on `sslServer` with an HTTP→HTTPS redirect | ✅ certificate at `certificate/cert.pem` + `key.pem` |
 | Payment webhooks (`<webhookRoute>/:provider[/:tenantId]`) with a pluggable verifier | ✅ `set_payment_verify` authenticates, the `Payment` record is updated safely, `set_payment_webhook` runs after |
-| Payment provider clients (charge/refund/verify + signature checking) | ⏳ register a payment verifier; provider clients need credentials |
+| Built-in **Stripe** provider: `create_payment` (Checkout), `verify_payment`, `refund`, and webhook signature verification | ✅ configure `apiGateway.payment.providers` with `secret_key`/`webhook_secret` |
+| Other payment provider clients (azampay, clickpesa, flutterwave, paypal, pesapal, selcom, twocheckout) | ⏳ register a payment verifier; each needs credentials |
 | WebSocket JS SDK (`/yekonga.io/yekonga.io.js`) | ⏳ the embedded client script isn't ported |
 
 A tenant id set by a preload middleware (`req.set_tenant_id(...)`) is kept
@@ -171,19 +172,28 @@ everything that runs after it.
 - Payment webhooks are served at `<webhookRoute>/:provider` and
   `<webhookRoute>/:provider/:tenantId` (default `webhookRoute` is
   `/payment/webhook`) when payments are in use (`apiGateway.payment.providers`,
-  `hasPaymentModule`, or tenant billing). Go's `payment.Controller` verifies
-  each provider's signature with the provider's own SDK; those clients aren't
-  ported, so verification is a function you register with `set_payment_verify`
-  — it authenticates the raw request into a `WebhookEvent` (or returns a
-  `WebhookError` → 401/404/400/500). With none registered, every webhook is
+  `hasPaymentModule`, or tenant billing). A webhook is authenticated by the
+  built-in client for the configured provider, or — taking precedence — a
+  function you register with `set_payment_verify` (it authenticates the raw
+  request into a `WebhookEvent`, or returns a `WebhookError` → 401/404/400/500).
+  With neither a built-in provider nor a registered verifier, every webhook is
   refused with `501`, so an unverified notification can never settle a payment.
   Once verified, the framework applies the result to the `Payment` record
   exactly as Go does: it matches within the same provider and tenant
   credentials, never moves a payment back from succeeded/refunded, records a
   success whose amount or currency differs from the invoice as failed, and
   no-ops on repeated deliveries; then `set_payment_webhook` runs (returning an
-  error answers `500` so the gateway retries). The provider clients themselves
-  (charge/refund/verify) aren't ported.
+  error answers `500` so the gateway retries).
+- The **Stripe** provider client is ported (`gateway/payment/stripe.go`):
+  `create_payment` opens a Checkout Session, `verify_payment` reads a session,
+  `refund` calls `/v1/refunds`, and its webhook `parse_webhook` verifies the
+  `Stripe-Signature` header (HMAC-SHA256 over `"{timestamp}.{raw body}"` keyed
+  on the `whsec_...` secret, 5-minute tolerance) so a configured Stripe gateway
+  needs no `set_payment_verify`. Configure it under
+  `apiGateway.payment.providers` with `secret_key` (and `webhook_secret` for
+  webhooks); `baseURL` overrides the API host. The other providers (azampay,
+  clickpesa, flutterwave, paypal, pesapal, selcom, twocheckout) aren't ported
+  yet — register a `set_payment_verify` for their webhooks.
 - `security.rateLimit`, `security.errorGuard` and the `IpAccessRule`
   whitelist are enforced. The rate limiter is a per-client token bucket; the
   error guard blocks a client that sends more than `requestsPerSecond` error

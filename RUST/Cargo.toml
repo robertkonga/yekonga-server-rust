@@ -24,6 +24,7 @@ bytes = "1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "serde", "std"] }
 form_urlencoded = "1"
 futures-util = { version = "0.3", default-features = false, features = ["std"] }
+hex = "0.4"
 hmac = "0.12"
 http = "1"
 mime_guess = "2"
