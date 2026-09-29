@@ -245,7 +245,24 @@ impl Yekonga {
             return;
         }
         if channel == "WhatsApp" && !self.config().api_gateway.whatsapp.api_key.is_empty() {
-            let result = self.send_whatsapp_builtin(&recipient, &content).await;
+            // A content that parses as a JSON object is sent as a structured
+            // (template/media) message with that object as the body, as Go's
+            // dispatch does; anything else is a plain text message.
+            let result = match serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(
+                &content,
+            ) {
+                Ok(map) if !map.is_empty() => {
+                    self.send_whatsapp_content(
+                        &recipient,
+                        crate::gateway::WhatsappContent {
+                            content: map,
+                            ..Default::default()
+                        },
+                    )
+                    .await
+                }
+                _ => self.send_whatsapp_builtin(&recipient, &content).await,
+            };
             if result.status != "SUCCESS" {
                 tracing::warn!(channel, recipient, message = %result.message, "WhatsApp send failed");
             }

@@ -60,12 +60,12 @@ gateway providers and the Excel-to-CSV conversion remain.
 | Notifications (`notify`): queues `Notification` records per channel; a cron job dispatches them | ✅ |
 | Send functions (`set_send_sms`/`set_send_email`/`set_send_whatsapp`); OTP codes queue as notifications | ✅ |
 | Built-in Beem SMS provider (`apiGateway.sms`), used by the dispatch when no `send_sms` hook is set | ✅ |
-| Built-in Infobip WhatsApp provider (`apiGateway.whatsapp`), text messages | ✅ |
+| Built-in Infobip WhatsApp provider (`apiGateway.whatsapp`): text, template, media and raw-content messages | ✅ |
 | Built-in SMTP mail sender (`mail.smtp`), HTML email | ✅ |
 | File uploads (`/upload`, `/upload-files`) and downloads (`/download/:file.:ext`) | ✅ saved under `public/uploads`; image resize not ported |
 | TLS (`ports.secure`): HTTPS on `sslServer` with an HTTP→HTTPS redirect | ✅ certificate at `certificate/cert.pem` + `key.pem` |
 | Payment webhooks (`<webhookRoute>/:provider[/:tenantId]`) with a pluggable verifier | ✅ `set_payment_verify` authenticates, the `Payment` record is updated safely, `set_payment_webhook` runs after |
-| Infobip SMS provider, template/media WhatsApp messages; payment provider clients (charge/refund/verify + signature checking) | ⏳ register a send function / a payment verifier; provider clients need credentials |
+| Infobip SMS provider; payment provider clients (charge/refund/verify + signature checking) | ⏳ register a send function / a payment verifier; provider clients need credentials |
 | WebSocket JS SDK (`/yekonga.io/yekonga.io.js`) | ⏳ the embedded client script isn't ported |
 
 A tenant id set by a preload middleware (`req.set_tenant_id(...)`) is kept
@@ -257,11 +257,14 @@ everything that runs after it.
   registered). The built-in **Beem** SMS provider is ported: when
   `apiGateway.sms` is configured and no `send_sms` hook is registered, SMS
   notifications go through it (`apiGateway.sms.baseURL` overrides Beem's host,
-  which Go doesn't allow). The built-in **Infobip** WhatsApp provider (text
-  messages, `apiGateway.whatsapp`) and the **SMTP** mail sender (`mail.smtp`,
-  HTML email via `lettre`) are ported too. The Infobip SMS provider and
-  WhatsApp template/media messages aren't ported; without a registered sender
-  those notifications are logged and marked submitted without being sent.
+  which Go doesn't allow). The built-in **Infobip** WhatsApp provider
+  (`apiGateway.whatsapp`) and the **SMTP** mail sender (`mail.smtp`, HTML email
+  via `lettre`) are ported too. The WhatsApp provider sends text, template,
+  media and raw-content messages (`send_whatsapp_content`, or a `WhatsApp`
+  notification whose `content` is a JSON object — sent as a template body, as
+  Go's dispatch does). The Infobip SMS provider isn't ported; without a
+  registered sender those notifications are logged and marked submitted
+  without being sent.
 - Auth mutations that only look a user up in Go (`socialLogin`,
   `contactOTP`, `contactVerify`, `resetPassword`, `confirmToken`,
   `changePassword`, `switchAccount`) return "not supported by the Rust port
