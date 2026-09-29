@@ -63,7 +63,7 @@ gateway providers and the Excel-to-CSV conversion remain.
 | Infobip delivery-status callback (`/infobip/:channel/notification`) updates a notification's status/`isSeen` | ✅ |
 | Built-in Infobip WhatsApp provider (`apiGateway.whatsapp`): text, template, media and raw-content messages | ✅ |
 | Built-in SMTP mail sender (`mail.smtp`), HTML email | ✅ |
-| File uploads (`/upload`, `/upload-files`) and downloads (`/download/:file.:ext`) | ✅ saved under `public/uploads`; image resize not ported |
+| File uploads (`/upload`, `/upload-files`) and downloads (`/download/:file.:ext`) | ✅ saved under `public/uploads`; images resized to 1400px wide and re-encoded as WebP |
 | TLS (`ports.secure`): HTTPS on `sslServer` with an HTTP→HTTPS redirect | ✅ certificate at `certificate/cert.pem` + `key.pem` |
 | Payment webhooks (`<webhookRoute>/:provider[/:tenantId]`) with a pluggable verifier | ✅ `set_payment_verify` authenticates, the `Payment` record is updated safely, `set_payment_webhook` runs after |
 | Payment provider clients (charge/refund/verify + signature checking) | ⏳ register a payment verifier; provider clients need credentials |
@@ -147,10 +147,15 @@ everything that runs after it.
   HTTP→HTTPS redirect on `ports.server`. TLS uses rustls with the ring
   provider (Go uses Go's crypto/tls); the certificate and key formats (PEM)
   are the same.
-- Uploaded files are saved under `public/uploads` with a random name and the
-  original extension. Go resizes images to WebP on upload; the port stores
-  them unchanged. `/excel-to-csv` converts the uploaded workbook's first sheet
-  to CSV (via `calamine`).
+- Uploaded files are saved under `public/uploads` with a random name. Images
+  (`png`/`jpg`/`jpeg`/`webp`) are resized to fit 1400px wide (aspect preserved,
+  never upscaled) and re-encoded as WebP at quality 80 — decode/resize via the
+  `image` crate, lossy WebP encode via `libwebp` (the `webp` crate) — matching
+  Go's upload resize; an undecodable file keeps its original bytes and
+  extension. (Go wrote the WebP alongside but still returned the original file's
+  URL; the port serves the WebP.) Other files keep their original extension.
+  `/excel-to-csv` converts the uploaded workbook's first sheet to CSV (via
+  `calamine`).
 - GraphQL `distinct` and `groupBy` are applied in the port after fetching (in
   memory), so they work the same on every backend; Go pushes them into the
   database query. `groupBy` on a list query returns one record per distinct

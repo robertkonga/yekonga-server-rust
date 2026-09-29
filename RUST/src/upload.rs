@@ -2,14 +2,12 @@
 //! `/excel-to-csv` and `/download/:filename.:ext` routes in
 //! `yekonga/initializer_other_routes.go`).
 //!
-//! Uploaded files are saved under `public/uploads` with a random name and the
-//! original extension; the response is `{"status": "success", "files": [url…]}`
-//! with each file's public URL. Downloads serve `public/tmp/<name>.<ext>` as
-//! an attachment.
-//!
-//! Image resizing/WebP conversion (Go resizes images on upload) and the Excel
-//! to CSV conversion aren't ported: files are stored as uploaded, and
-//! `/excel-to-csv` returns "not supported by the Rust port yet".
+//! Uploaded files are saved under `public/uploads` with a random name; the
+//! response is `{"status": "success", "files": [url…]}` with each file's public
+//! URL. Images (`png`/`jpg`/`jpeg`/`webp`) are resized to fit 1400px wide and
+//! re-encoded as WebP (Go's upload resize); other files keep their original
+//! extension. Downloads serve `public/tmp/<name>.<ext>` as an attachment, and
+//! `/excel-to-csv` returns the workbook's first sheet as CSV.
 
 use std::path::{Path, PathBuf};
 
@@ -55,6 +53,39 @@ pub(crate) fn register_routes(app: &Yekonga) {
 /// accepts one under `file`.
 fn path_is_multiple(req: &Request) -> bool {
     req.path().trim_end_matches('/').ends_with("upload-files")
+}
+
+/// The upload image resize box (Go's `MaxWidth`) and WebP quality.
+const IMAGE_MAX_WIDTH: u32 = 1400;
+const WEBP_QUALITY: f32 = 80.0;
+
+/// Re-encodes an uploaded image as WebP, shrinking it to fit `IMAGE_MAX_WIDTH`
+/// wide (preserving aspect, never upscaling), like Go's upload resize. Returns
+/// `None` when the file isn't a supported image or can't be decoded/encoded, so
+/// the caller keeps the original bytes. `ext` is the original extension,
+/// leading dot included.
+fn resize_to_webp(ext: &str, data: &[u8]) -> Option<Vec<u8>> {
+    if !matches!(
+        ext.to_ascii_lowercase().as_str(),
+        ".png" | ".jpg" | ".jpeg" | ".webp"
+    ) {
+        return None;
+    }
+    let image = image::load_from_memory(data).ok()?;
+    let (width, height) = (image.width(), image.height());
+    let image = if width > IMAGE_MAX_WIDTH {
+        // fitBox: scale down to the max width, preserving aspect ratio.
+        let scaled_height = (height as f64 * IMAGE_MAX_WIDTH as f64 / width as f64).round() as u32;
+        image.resize_exact(
+            IMAGE_MAX_WIDTH,
+            scaled_height.max(1),
+            image::imageops::FilterType::Triangle,
+        )
+    } else {
+        image
+    };
+    let encoder = webp::Encoder::from_image(&image).ok()?;
+    Some(encoder.encode(WEBP_QUALITY).to_vec())
 }
 
 /// The multipart boundary of the request, if it is multipart/form-data.
@@ -204,8 +235,15 @@ async fn upload(req: Request, res: Response, multiple: bool) {
             return;
         };
 
-        let saved = format!("{}{ext}", new_object_id());
-        if tokio::fs::write(upload_dir.join(&saved), &data)
+        // Images are resized to fit 1400px wide and re-encoded as WebP (Go's
+        // upload path); anything else is stored as uploaded. On a decode/encode
+        // failure the original is kept.
+        let hex = new_object_id();
+        let (saved, bytes): (String, Vec<u8>) = match resize_to_webp(&ext, &data) {
+            Some(webp) => (format!("{hex}.webp"), webp),
+            None => (format!("{hex}{ext}"), data.to_vec()),
+        };
+        if tokio::fs::write(upload_dir.join(&saved), &bytes)
             .await
             .is_err()
         {
