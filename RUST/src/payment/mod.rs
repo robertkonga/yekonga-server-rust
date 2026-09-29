@@ -96,6 +96,7 @@ impl WebhookEvent {
     }
 }
 
+mod selcom;
 mod stripe;
 
 /// The customer a payment is for (Go's `payment.Customer`).
@@ -135,6 +136,32 @@ pub struct PaymentResponse {
     /// The URL to redirect the payer to.
     pub checkout_url: String,
     pub status: String,
+    pub raw: Value,
+}
+
+/// A request to trigger a direct mobile-money charge (Go's `payment.PushRequest`):
+/// the gateway prompts the customer on their phone to approve with their PIN.
+#[derive(Clone, Debug, Default)]
+pub struct PushRequest {
+    /// The merchant reference — usually the `Payment` record id.
+    pub reference: String,
+    pub amount: f64,
+    pub currency: String,
+    /// The MSISDN the prompt is sent to.
+    pub phone: String,
+    pub description: String,
+}
+
+/// The outcome of [`push_ussd`](Yekonga::push_ussd): the prompt was delivered,
+/// not yet approved — poll `verify_payment` or wait for the webhook.
+#[derive(Clone, Debug)]
+pub struct PushResponse {
+    pub provider: String,
+    pub reference: String,
+    pub provider_ref: String,
+    pub status: String,
+    /// Human text from the gateway, e.g. "enter your PIN".
+    pub instructions: String,
     pub raw: Value,
 }
 
@@ -182,6 +209,7 @@ impl std::error::Error for ProviderError {}
 /// matching arms below.
 enum Provider {
     Stripe(stripe::Stripe),
+    Selcom(selcom::Selcom),
 }
 
 impl Provider {
@@ -190,29 +218,55 @@ impl Provider {
     fn from_config(config: &PaymentProviderConfig) -> Option<Self> {
         match config.provider.as_str() {
             "stripe" => stripe::Stripe::new(config).map(Provider::Stripe),
+            "selcom" => selcom::Selcom::new(config).map(Provider::Selcom),
             _ => None,
+        }
+    }
+
+    fn not_supported(&self, operation: &str) -> ProviderError {
+        ProviderError {
+            provider: self.name().into(),
+            code: String::new(),
+            message: format!("{} does not support {operation}", self.name()),
+        }
+    }
+
+    fn name(&self) -> &'static str {
+        match self {
+            Provider::Stripe(_) => "stripe",
+            Provider::Selcom(_) => "selcom",
         }
     }
 
     async fn create_payment(&self, req: &PaymentRequest) -> Result<PaymentResponse, ProviderError> {
         match self {
             Provider::Stripe(stripe) => stripe.create_payment(req).await,
+            Provider::Selcom(selcom) => selcom.create_payment(req).await,
         }
     }
 
     async fn verify_payment(&self, provider_ref: &str) -> Result<PaymentResult, ProviderError> {
         match self {
             Provider::Stripe(stripe) => stripe.verify_payment(provider_ref).await,
+            Provider::Selcom(selcom) => selcom.verify_payment(provider_ref).await,
+        }
+    }
+
+    async fn push_ussd(&self, req: &PushRequest) -> Result<PushResponse, ProviderError> {
+        match self {
+            Provider::Selcom(selcom) => selcom.push_ussd(req).await,
+            _ => Err(self.not_supported("a mobile-money push")),
         }
     }
 
     async fn refund(&self, req: &RefundRequest) -> Result<RefundResult, ProviderError> {
         match self {
             Provider::Stripe(stripe) => stripe.refund(req).await,
+            Provider::Selcom(_) => Err(self.not_supported("refunds")),
         }
     }
 
-    fn parse_webhook(
+    async fn parse_webhook(
         &self,
         headers: &axum::http::HeaderMap,
         body: &[u8],
@@ -225,6 +279,7 @@ impl Provider {
                     .unwrap_or_default();
                 stripe.parse_webhook(signature, body)
             }
+            Provider::Selcom(selcom) => selcom.parse_webhook(body).await,
         }
     }
 }
@@ -378,6 +433,16 @@ impl Yekonga {
             .await
     }
 
+    /// Triggers a direct mobile-money charge through the named provider (Go's
+    /// `PushUSSD`). Only providers with a push flow (e.g. Selcom) support it.
+    pub async fn push_ussd(
+        &self,
+        provider: &str,
+        request: PushRequest,
+    ) -> Result<PushResponse, ProviderError> {
+        self.require_provider(provider)?.push_ussd(&request).await
+    }
+
     /// Refunds a settled payment through the named provider (Go's `Refund`).
     pub async fn refund(
         &self,
@@ -451,7 +516,7 @@ async fn handle(req: Request, res: Response) {
             }
         }
     } else if let Some(client) = app.payment_provider(&provider) {
-        match client.parse_webhook(req.headers(), req.raw_body()) {
+        match client.parse_webhook(req.headers(), req.raw_body()).await {
             Ok(event) => event,
             Err(error) => {
                 tracing::error!(provider, ?error, "payment webhook rejected");
