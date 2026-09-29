@@ -12,9 +12,11 @@
 //! - relation fields on the object types (`order.user`, `user.orders`,
 //!   `user.orderPaginate`, `user.orderSummary`).
 //!
-//! Not ported yet: `groupBy` and `distinct` arguments, summary `graph`,
-//! `download…` queries, `…Action` mutations and custom GraphQL fields, which
-//! return an error saying so.
+//! The `groupBy` and `distinct` arguments are applied to the plural list.
+//!
+//! Not ported yet: `groupBy` on paginated and summary queries, summary `graph`,
+//! `download…` queries and custom GraphQL fields, which return an error saying
+//! so.
 
 mod auth;
 mod resolve;

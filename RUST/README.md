@@ -37,8 +37,9 @@ gateway providers and the Excel-to-CSV conversion remain.
 | GraphQL mutations: create (with nested children), update, delete, import | ✅ |
 | REST API (`restApiEnabled`, `/api/:model…`) | ✅ |
 | GraphQL `distinct` (list queries) | ✅ dedupes by the given fields |
+| GraphQL `groupBy` (list queries) | ✅ one record per group, `limit`/`page` window the groups |
 | GraphQL model actions (`…Action`), via `set_graphql_action` | ✅ runs the registered handler |
-| GraphQL `groupBy`, summary `graph`, `download…`, custom fields | ⏳ return "not supported by the Rust port yet" |
+| GraphQL `groupBy` on paginated/summary queries, summary `graph`, `download…`, custom fields | ⏳ return "not supported by the Rust port yet" |
 | Auth GraphQL schema (`graphql.apiAuthRoute`), on authorization servers | ✅ identical to Go's, with and without `secureAuthentication` (see below) |
 | Auth GraphQL: `otp`, `login` (password/OTP), `refreshToken`, `profile`, `register`, `tenantAvailability` | ✅ |
 | Auth endpoints `/me`, `/logout`, `/refresh` (with optional `/:moduleName`) | ✅ |
@@ -148,13 +149,18 @@ everything that runs after it.
   original extension. Go resizes images to WebP on upload; the port stores
   them unchanged. `/excel-to-csv` converts the uploaded workbook's first sheet
   to CSV (via `calamine`).
-- GraphQL `distinct` is applied in the port after fetching (in memory), so it
-  works the same on every backend; Go pushes it into the database query.
-  `groupBy`, the summary `graph` and the `download…` queries still return "not
-  supported by the Rust port yet": grouped aggregation, time-bucketed graph
-  data and server-side file rendering (PDF/Excel) aren't ported. A model's
-  `…Action` mutation runs a handler registered with `set_graphql_action`
-  (like Go's `Action`); with none registered it errors.
+- GraphQL `distinct` and `groupBy` are applied in the port after fetching (in
+  memory), so they work the same on every backend; Go pushes them into the
+  database query. `groupBy` on a list query returns one record per distinct
+  combination of the fields, with the group fields at the top level and under
+  `_id`/`id` (the shape Go's MongoDB/SQL backends return from a `$group`), and
+  `limit`/`page` window the groups rather than the raw rows. `groupBy` on
+  paginated and summary queries, the summary `graph` and the `download…`
+  queries still return "not supported by the Rust port yet": group-aware
+  pagination, time-bucketed graph data and server-side file rendering
+  (PDF/Excel) aren't ported. A model's `…Action` mutation runs a handler
+  registered with `set_graphql_action` (like Go's `Action`); with none
+  registered it errors.
 - `security.rateLimit`, `security.errorGuard` and the `IpAccessRule`
   whitelist are enforced. The rate limiter is a per-client token bucket; the
   error guard blocks a client that sends more than `requestsPerSecond` error

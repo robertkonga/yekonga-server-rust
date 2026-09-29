@@ -214,17 +214,21 @@ fn apply_args(mut query: ModelQuery, args: &Map<String, Value>) -> Result<ModelQ
             query = query.order_by(field, direction.as_str().unwrap_or("ASC"));
         }
     }
-    if !names(args.get("groupBy")).is_empty() {
-        return Err(not_ported("groupBy"));
-    }
-    if let Some(limit) = args.get("limit").and_then(Value::as_i64) {
-        query = query.take(limit);
-    }
-    if let Some(page) = args.get("page").and_then(Value::as_i64) {
-        query = query.page(page);
-    }
-    if let Some(skip) = args.get("skip").and_then(Value::as_i64) {
-        query = query.skip(skip);
+    // `groupBy` collapses the rows into one record per group (see `group_by`),
+    // so its limit/skip/page apply to the groups, not the raw rows: leave them
+    // off the query and let `list` window the grouped result instead. `orderBy`
+    // stays on the query — sorting the rows by the group keys means each group's
+    // first row (the one kept) already comes out in the right order.
+    if names(args.get("groupBy")).is_empty() {
+        if let Some(limit) = args.get("limit").and_then(Value::as_i64) {
+            query = query.take(limit);
+        }
+        if let Some(page) = args.get("page").and_then(Value::as_i64) {
+            query = query.page(page);
+        }
+        if let Some(skip) = args.get("skip").and_then(Value::as_i64) {
+            query = query.skip(skip);
+        }
     }
     Ok(query)
 }
@@ -283,9 +287,16 @@ pub(crate) async fn list<'a>(
     model: &Arc<DataModel>,
     keys: Option<RelationKeys>,
 ) -> FieldResult<'a> {
+    let args = args(ctx);
     let (query, _) = field_query(ctx, app, model, keys.as_ref())?;
     let records = query.find().await.map_err(db_error)?;
-    let records = distinct(records, &names(args(ctx).get("distinct")));
+
+    let group_fields = names(args.get("groupBy"));
+    let records = if group_fields.is_empty() {
+        distinct(records, &names(args.get("distinct")))
+    } else {
+        group_window(group_by(records, &group_fields, model), &args)
+    };
     Ok(Some(FieldValue::list(records.into_iter().map(record))))
 }
 
@@ -308,12 +319,79 @@ pub(crate) fn distinct(records: Vec<DataMap>, fields: &[String]) -> Vec<DataMap>
         .collect()
 }
 
+/// Collapses `records` into one per distinct combination of `fields` (Go's
+/// `groupBy` argument). Each group keeps the group fields at the top level and
+/// together under `_id`/`id`, plus `_collection`/`_model`, matching the shape
+/// the MongoDB and SQL backends return from a `$group`. The first row seen for
+/// a group wins, so a caller that sorted the rows by the group keys gets the
+/// groups in order.
+pub(crate) fn group_by(
+    records: Vec<DataMap>,
+    fields: &[String],
+    model: &DataModel,
+) -> Vec<DataMap> {
+    let mut seen = std::collections::HashSet::new();
+    let mut groups = Vec::new();
+    for row in records {
+        let key: Vec<String> = fields
+            .iter()
+            .map(|f| row.get(f).map(ToString::to_string).unwrap_or_default())
+            .collect();
+        if !seen.insert(key) {
+            continue;
+        }
+
+        let id: Map<String, Value> = fields
+            .iter()
+            .map(|f| (f.clone(), row.get(f).cloned().unwrap_or(Value::Null)))
+            .collect();
+        let id = Value::Object(id);
+
+        let mut group = DataMap::new();
+        for f in fields {
+            group.insert(f.clone(), row.get(f).cloned().unwrap_or(Value::Null));
+        }
+        group.insert("_id".into(), id.clone());
+        group.insert("id".into(), id);
+        group.insert(
+            "_collection".into(),
+            Value::String(model.collection.clone()),
+        );
+        group.insert("_model".into(), Value::String(model.name.clone()));
+        groups.push(group);
+    }
+    groups
+}
+
+/// Applies a `groupBy` query's `skip`/`page`/`limit` to the grouped records
+/// (Go applies these after the `GROUP BY`, so they page the groups). `skip`
+/// wins over `page`; a non-positive `limit` means no limit.
+fn group_window(groups: Vec<DataMap>, args: &Map<String, Value>) -> Vec<DataMap> {
+    let arg = |key| args.get(key).and_then(Value::as_i64);
+    let limit = arg("limit").filter(|n| *n > 0);
+    let skip = match arg("skip").filter(|n| *n > 0) {
+        Some(skip) => skip,
+        None => limit.unwrap_or(0) * (arg("page").unwrap_or(1) - 1).max(0),
+    };
+
+    let mut windowed: Vec<DataMap> = groups.into_iter().skip(skip as usize).collect();
+    if let Some(limit) = limit {
+        windowed.truncate(limit as usize);
+    }
+    windowed
+}
+
 pub(crate) async fn paginate<'a>(
     ctx: &ResolverContext<'a>,
     app: &Yekonga,
     model: &Arc<DataModel>,
     keys: Option<RelationKeys>,
 ) -> FieldResult<'a> {
+    if !names(args(ctx).get("groupBy")).is_empty() {
+        // Grouped pagination needs group-aware totals/pages, which the ported
+        // backends don't compute; only the plural list applies `groupBy`.
+        return Err(not_ported("groupBy on a paginated query"));
+    }
     let (query, _) = field_query(ctx, app, model, keys.as_ref())?;
     let page = query.paginate().await.map_err(db_error)?;
     Ok(Some(FieldValue::owned_any(Node::Json(Value::Object(page)))))
