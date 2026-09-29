@@ -3,11 +3,15 @@
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 
+use axum::body::Body;
 use axum::extract::State;
 use axum::routing::post;
 use axum::Router;
 use http::HeaderMap;
+use http::Request as HttpRequest;
+use http_body_util::BodyExt;
 use serde_json::{json, Value};
+use tower::ServiceExt;
 use yekonga::{DatabaseStructure, LocalBackend, Yekonga, YekongaConfig};
 
 /// What the mock gateway received.
@@ -88,6 +92,123 @@ async fn beem_sends_an_sms() {
     assert_eq!(sent.body["source_addr"], "MYAPP");
     assert_eq!(sent.body["message"], "hello there");
     assert_eq!(sent.body["recipients"][0]["dest_addr"], "255712345678");
+}
+
+/// A mock Infobip SMS server (`/sms/2/text/advanced`) that records the request
+/// and replies with an accepted message.
+async fn mock_infobip_sms() -> (SocketAddr, Arc<Mutex<Captured>>) {
+    let captured = Arc::new(Mutex::new(Captured::default()));
+    let state = captured.clone();
+
+    async fn handler(
+        State(captured): State<Arc<Mutex<Captured>>>,
+        headers: HeaderMap,
+        body: String,
+    ) -> ([(&'static str, &'static str); 1], String) {
+        let mut slot = captured.lock().unwrap();
+        slot.authorization = headers
+            .get("authorization")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or_default()
+            .to_string();
+        slot.body = serde_json::from_str(&body).unwrap_or(Value::Null);
+        (
+            [("content-type", "application/json")],
+            json!({"messages": [{"messageId": "sms-1", "status": {"description": "Message sent to next instance"}}]})
+                .to_string(),
+        )
+    }
+
+    let app = Router::new()
+        .route("/sms/2/text/advanced", post(handler))
+        .with_state(state);
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        axum::serve(listener, app).await.unwrap();
+    });
+    (addr, captured)
+}
+
+#[tokio::test]
+async fn infobip_sends_an_sms() {
+    let (addr, captured) = mock_infobip_sms().await;
+    let config: YekongaConfig = serde_json::from_value(json!({
+        "authentication": {"secretToken": "s"},
+        "apiGateway": {"sms": {
+            "provider": "infobip",
+            "baseURL": format!("http://{addr}"),
+            "sender": "MYAPP",
+            "apiKey": "smskey",
+        }}
+    }))
+    .unwrap();
+    let app = Yekonga::with_backend(
+        config,
+        DatabaseStructure::from_value(&json!({})),
+        Arc::new(LocalBackend::in_memory()),
+    );
+
+    let response = app.send_sms_builtin("255712345678", "karibu").await;
+    assert_eq!(response.status, "SUCCESS", "{}", response.message);
+    assert_eq!(response.message_id, "sms-1");
+
+    let sent = captured.lock().unwrap();
+    assert_eq!(sent.authorization, "App smskey");
+    let message = &sent.body["messages"][0];
+    assert_eq!(message["from"], "MYAPP");
+    assert_eq!(message["text"], "karibu");
+    assert_eq!(message["destinations"][0]["to"], "255712345678");
+}
+
+#[tokio::test]
+async fn delivery_callback_updates_the_notification() {
+    // Payments module off; the Notification model is built by default.
+    let config: YekongaConfig =
+        serde_json::from_value(json!({"authentication": {"secretToken": "s"}})).unwrap();
+    let app = Yekonga::with_backend(
+        config,
+        DatabaseStructure::from_value(&json!({})),
+        Arc::new(LocalBackend::in_memory()),
+    );
+
+    // A submitted notification carrying the provider's message id.
+    let note = app
+        .query("Notification")
+        .unwrap()
+        .create(json!({
+            "type": "sms",
+            "recipient": "255712345678",
+            "status": "submitted",
+            "responseReference": "msg-42",
+        }))
+        .await
+        .unwrap();
+    let id = note["id"].as_str().unwrap().to_string();
+
+    // Infobip posts a delivery report for that message id.
+    let body = json!({"results": [
+        {"messageId": "msg-42", "status": {"groupName": "DELIVERED"}, "seenAt": "2026-01-01T00:00:00Z"}
+    ]});
+    let request = HttpRequest::post("/infobip/sms/notification")
+        .header("content-type", "application/json")
+        .header("host", "localhost")
+        .body(Body::from(body.to_string()))
+        .unwrap();
+    let response = app.router().oneshot(request).await.unwrap();
+    assert_eq!(response.status().as_u16(), 200);
+    let _ = response.into_body().collect().await.unwrap();
+
+    let updated = app
+        .query("Notification")
+        .unwrap()
+        .where_("id", id)
+        .find_one()
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(updated["status"], "delivered");
+    assert_eq!(updated["isSeen"], true);
 }
 
 /// A mock Infobip WhatsApp server: records the request and replies with a

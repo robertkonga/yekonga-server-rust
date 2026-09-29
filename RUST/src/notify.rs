@@ -14,7 +14,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use serde_json::json;
+use serde_json::{json, Value};
 
 use crate::app::{BoxFuture, Yekonga};
 use crate::db::values::new_object_id;
@@ -190,28 +190,32 @@ impl Yekonga {
 
         for note in waiting {
             let id = crate::auth::string_of(note.get("_id"));
-            match crate::auth::string_of(note.get("type")).as_str() {
+            let message_id = match crate::auth::string_of(note.get("type")).as_str() {
                 "sms" => self.dispatch(|f| &f.sms, note, "SMS").await,
                 "mail" => self.dispatch(|f| &f.email, note, "email").await,
                 "whatsapp" => self.dispatch(|f| &f.whatsapp, note, "WhatsApp").await,
-                _ => {}
+                _ => None,
+            };
+            // Record the provider's message id so a delivery-status callback can
+            // find this notification (`responseReference`), as Go stores it.
+            let mut update = json!({"status": "submitted"});
+            if let Some(message_id) = message_id.filter(|m| !m.is_empty()) {
+                update["responseReference"] = Value::String(message_id);
             }
-            let _ = query
-                .clone()
-                .where_("_id", id)
-                .update(json!({"status": "submitted"}))
-                .await;
+            let _ = query.clone().where_("_id", id).update(update).await;
         }
     }
 
     /// Hands one notification to its channel's send function, or logs that no
-    /// sender is registered.
+    /// sender is registered. Returns the provider's message id from a built-in
+    /// send (so the caller can store it for the delivery-status callback);
+    /// `None` for a registered hook, a failure, or no sender.
     async fn dispatch(
         &self,
         pick: impl Fn(&SendFunctions) -> &Option<SendFn>,
         note: DataMap,
         channel: &str,
-    ) {
+    ) -> Option<String> {
         let function = pick(
             &self
                 .send_functions()
@@ -221,36 +225,23 @@ impl Yekonga {
         .clone();
         if let Some(function) = function {
             function(note).await;
-            return;
+            return None;
         }
 
         // No registered hook: use a built-in provider where one exists.
         let recipient = crate::auth::string_of(note.get("recipient"));
         let content = crate::auth::string_of(note.get("content"));
-        if channel == "email" && !self.config().mail.smtp.host.is_empty() {
+        let result = if channel == "email" && !self.config().mail.smtp.host.is_empty() {
             let subject = crate::auth::string_of(note.get("title"));
-            let result = self
-                .send_email_builtin(&recipient, &subject, &content)
-                .await;
-            if result.status != "SUCCESS" {
-                tracing::warn!(channel, recipient, message = %result.message, "email send failed");
-            }
-            return;
-        }
-        if channel == "SMS" && !self.config().api_gateway.sms.api_key.is_empty() {
-            let result = self.send_sms_builtin(&recipient, &content).await;
-            if result.status != "SUCCESS" {
-                tracing::warn!(channel, recipient, message = %result.message, "SMS send failed");
-            }
-            return;
-        }
-        if channel == "WhatsApp" && !self.config().api_gateway.whatsapp.api_key.is_empty() {
+            self.send_email_builtin(&recipient, &subject, &content)
+                .await
+        } else if channel == "SMS" && !self.config().api_gateway.sms.api_key.is_empty() {
+            self.send_sms_builtin(&recipient, &content).await
+        } else if channel == "WhatsApp" && !self.config().api_gateway.whatsapp.api_key.is_empty() {
             // A content that parses as a JSON object is sent as a structured
             // (template/media) message with that object as the body, as Go's
             // dispatch does; anything else is a plain text message.
-            let result = match serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(
-                &content,
-            ) {
+            match serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&content) {
                 Ok(map) if !map.is_empty() => {
                     self.send_whatsapp_content(
                         &recipient,
@@ -262,17 +253,20 @@ impl Yekonga {
                     .await
                 }
                 _ => self.send_whatsapp_builtin(&recipient, &content).await,
-            };
-            if result.status != "SUCCESS" {
-                tracing::warn!(channel, recipient, message = %result.message, "WhatsApp send failed");
             }
-            return;
-        }
+        } else {
+            tracing::warn!(
+                channel,
+                recipient,
+                "notification not sent: no {channel} sender is registered"
+            );
+            return None;
+        };
 
-        tracing::warn!(
-            channel,
-            recipient,
-            "notification not sent: no {channel} sender is registered"
-        );
+        if result.status != "SUCCESS" {
+            tracing::warn!(channel, recipient, message = %result.message, "{channel} send failed");
+            return None;
+        }
+        Some(result.message_id)
     }
 }
