@@ -1,14 +1,15 @@
 //! Outbound SMS gateway providers (port of `gateway/` and
 //! `cloud_send_functions.go`).
 //!
-//! Only the Beem SMS provider is ported. It is the built-in `send_sms` used by
-//! the notification dispatch when no [`set_send_sms`](Yekonga::set_send_sms)
-//! hook is registered and `apiGateway.sms` is configured. The Infobip SMS and
-//! WhatsApp providers and the SMTP mail sender are not ported — register a
-//! send function for those channels.
+//! Ported: the Beem SMS provider, the Infobip WhatsApp provider (text,
+//! template, media and raw-content messages) and the SMTP mail sender. Each is
+//! the built-in used by the notification dispatch when the matching
+//! `set_send_*` hook isn't registered and the channel is configured. The
+//! Infobip SMS provider isn't ported — register a send function for it.
 
 use base64::Engine;
-use serde_json::{json, Value};
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Map, Value};
 
 use crate::app::Yekonga;
 use crate::config::{SmsGatewayConfig, WhatsappGatewayConfig};
@@ -48,9 +49,27 @@ impl Yekonga {
     /// Sends a WhatsApp text message through the configured provider (Go's
     /// `SendWhatsapp` built-in path). Only Infobip is supported.
     pub async fn send_whatsapp_builtin(&self, phone: &str, text: &str) -> SendResponse {
+        self.send_whatsapp_content(
+            phone,
+            WhatsappContent {
+                text: text.into(),
+                ..Default::default()
+            },
+        )
+        .await
+    }
+
+    /// Sends a WhatsApp message of any type (text, template, media, or a raw
+    /// `content` body) through the configured provider — the full Go
+    /// `SendWhatsapp` content path. Only Infobip is supported.
+    pub async fn send_whatsapp_content(
+        &self,
+        phone: &str,
+        content: WhatsappContent,
+    ) -> SendResponse {
         let config = &self.config().api_gateway.whatsapp;
         match config.provider.as_str() {
-            "" | "infobip" => infobip_whatsapp_send(config, phone, text).await,
+            "" | "infobip" => infobip_whatsapp_send(config, phone, &content).await,
             other => SendResponse {
                 status: "FAILED".into(),
                 message: format!("WhatsApp provider {other:?} is not supported by the Rust port"),
@@ -139,13 +158,96 @@ fn with_scheme(base: &str) -> String {
     }
 }
 
-/// Sends one WhatsApp text message via Infobip's `/whatsapp/1/message/text`
-/// (port of `gateway/whatsapp/infobip.go`, text messages only): `App` API-key
-/// auth, and a non-empty `messages` array means success.
+/// A WhatsApp message body (Go's `setting.Content`). Deserializes from the
+/// notification `content` JSON, and is built by callers for template/media
+/// messages. `content` is a raw provider body used as-is.
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct WhatsappContent {
+    #[serde(rename = "type", default, skip_serializing_if = "String::is_empty")]
+    pub message_type: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub template: String,
+    #[serde(
+        rename = "templateName",
+        default,
+        skip_serializing_if = "String::is_empty"
+    )]
+    pub template_name: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub placeholders: Vec<String>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub text: String,
+    #[serde(rename = "mediaUrl", default, skip_serializing_if = "String::is_empty")]
+    pub media_url: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub caption: String,
+    #[serde(default, skip_serializing_if = "Map::is_empty")]
+    pub content: Map<String, Value>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub language: String,
+}
+
+/// The Infobip message type and `content` body for a [`WhatsappContent`],
+/// following Go's `InfobipProvider.Send` branching: an explicit `type` wins,
+/// otherwise a raw `content` map makes it a template; a `templateName` sends
+/// the whole content object, a raw map is sent as-is, a template builds the
+/// `templateData` body, text falls back to `"..."`, and a `mediaUrl` sends
+/// `{mediaUrl, caption}`.
+fn whatsapp_message(content: &WhatsappContent) -> (String, Value) {
+    let message_type = if !content.message_type.is_empty() {
+        content.message_type.clone()
+    } else if !content.content.is_empty() {
+        "template".into()
+    } else {
+        "text".into()
+    };
+
+    let body = if !content.template_name.is_empty() {
+        serde_json::to_value(content).unwrap_or(Value::Null)
+    } else if !content.content.is_empty() {
+        Value::Object(content.content.clone())
+    } else if message_type == "template" {
+        let template = if content.template.is_empty() {
+            &content.template_name
+        } else {
+            &content.template
+        };
+        json!({
+            "templateName": template,
+            "templateData": {"body": {"placeholders": content.placeholders}},
+            "language": "en",
+        })
+    } else if message_type == "text" {
+        let mut text = content.text.clone();
+        if text.is_empty() {
+            text = content
+                .content
+                .get("text")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .into();
+        }
+        if text.is_empty() {
+            text = "...".into();
+        }
+        json!({ "text": text })
+    } else if !content.media_url.is_empty() {
+        json!({"mediaUrl": content.media_url, "caption": content.caption})
+    } else {
+        Value::Null
+    };
+
+    (message_type, body)
+}
+
+/// Sends one WhatsApp message via Infobip's `/whatsapp/1/message/:type` (port
+/// of `gateway/whatsapp/infobip.go`): `App` API-key auth, a text message posts
+/// the message object directly while other types wrap it in `messages: [...]`,
+/// and a non-empty `messages` array in the response means success.
 async fn infobip_whatsapp_send(
     config: &WhatsappGatewayConfig,
     phone: &str,
-    text: &str,
+    content: &WhatsappContent,
 ) -> SendResponse {
     if config.base_url.is_empty() || config.api_key.is_empty() {
         return SendResponse {
@@ -155,17 +257,24 @@ async fn infobip_whatsapp_send(
         };
     }
     let message_id = new_object_id();
-    let body = json!({
+    let (message_type, content_body) = whatsapp_message(content);
+    let single = json!({
         "from": config.sender,
         "to": phone,
         "messageId": message_id,
-        "content": {"text": text},
+        "content": content_body,
         "callbackData": format!("{{\"id\": \"{message_id}\"}}"),
     });
+    // Text posts the message object directly; every other type is wrapped.
+    let body = if message_type == "text" {
+        single
+    } else {
+        json!({ "messages": [single] })
+    };
 
     let request = reqwest::Client::new()
         .post(format!(
-            "{}/whatsapp/1/message/text",
+            "{}/whatsapp/1/message/{message_type}",
             with_scheme(&config.base_url)
         ))
         .header("accept", "application/json")

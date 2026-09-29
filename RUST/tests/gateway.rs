@@ -15,6 +15,7 @@ use yekonga::{DatabaseStructure, LocalBackend, Yekonga, YekongaConfig};
 struct Captured {
     authorization: String,
     body: Value,
+    message_type: String,
 }
 
 /// Starts a mock Beem server that records the request and replies with a
@@ -97,6 +98,7 @@ async fn mock_whatsapp() -> (SocketAddr, Arc<Mutex<Captured>>) {
 
     async fn handler(
         State(captured): State<Arc<Mutex<Captured>>>,
+        axum::extract::Path(message_type): axum::extract::Path<String>,
         headers: HeaderMap,
         body: String,
     ) -> ([(&'static str, &'static str); 1], String) {
@@ -106,6 +108,7 @@ async fn mock_whatsapp() -> (SocketAddr, Arc<Mutex<Captured>>) {
             .and_then(|v| v.to_str().ok())
             .unwrap_or_default()
             .to_string();
+        slot.message_type = message_type;
         slot.body = serde_json::from_str(&body).unwrap_or(Value::Null);
         (
             [("content-type", "application/json")],
@@ -115,7 +118,7 @@ async fn mock_whatsapp() -> (SocketAddr, Arc<Mutex<Captured>>) {
     }
 
     let app = Router::new()
-        .route("/whatsapp/1/message/text", post(handler))
+        .route("/whatsapp/1/message/{type}", post(handler))
         .with_state(state);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
@@ -150,9 +153,79 @@ async fn infobip_sends_a_whatsapp_message() {
 
     let sent = captured.lock().unwrap();
     assert_eq!(sent.authorization, "App wakey");
+    assert_eq!(sent.message_type, "text");
+    // A text message posts the message object directly (no `messages` wrapper).
     assert_eq!(sent.body["from"], "44770");
     assert_eq!(sent.body["to"], "255712345678");
     assert_eq!(sent.body["content"]["text"], "habari");
+}
+
+fn whatsapp_app(addr: SocketAddr) -> Yekonga {
+    let config: YekongaConfig = serde_json::from_value(json!({
+        "authentication": {"secretToken": "s"},
+        "apiGateway": {"whatsapp": {
+            "provider": "infobip",
+            "baseURL": format!("http://{addr}"),
+            "sender": "44770",
+            "apiKey": "wakey",
+        }}
+    }))
+    .unwrap();
+    Yekonga::with_backend(
+        config,
+        DatabaseStructure::from_value(&json!({})),
+        Arc::new(LocalBackend::in_memory()),
+    )
+}
+
+#[tokio::test]
+async fn infobip_sends_a_template_message() {
+    let (addr, captured) = mock_whatsapp().await;
+    let app = whatsapp_app(addr);
+
+    let content = yekonga::gateway::WhatsappContent {
+        message_type: "template".into(),
+        template: "order_shipped".into(),
+        placeholders: vec!["Ally".into(), "TZ123".into()],
+        ..Default::default()
+    };
+    let response = app.send_whatsapp_content("255712345678", content).await;
+    assert_eq!(response.status, "SUCCESS", "{}", response.message);
+
+    let sent = captured.lock().unwrap();
+    assert_eq!(sent.message_type, "template");
+    // Non-text types are wrapped in a `messages` array.
+    let message = &sent.body["messages"][0];
+    assert_eq!(message["to"], "255712345678");
+    assert_eq!(message["content"]["templateName"], "order_shipped");
+    assert_eq!(
+        message["content"]["templateData"]["body"]["placeholders"],
+        json!(["Ally", "TZ123"])
+    );
+}
+
+#[tokio::test]
+async fn infobip_sends_a_media_message() {
+    let (addr, captured) = mock_whatsapp().await;
+    let app = whatsapp_app(addr);
+
+    let content = yekonga::gateway::WhatsappContent {
+        message_type: "image".into(),
+        media_url: "https://cdn.example.tz/receipt.png".into(),
+        caption: "Your receipt".into(),
+        ..Default::default()
+    };
+    let response = app.send_whatsapp_content("255712345678", content).await;
+    assert_eq!(response.status, "SUCCESS", "{}", response.message);
+
+    let sent = captured.lock().unwrap();
+    assert_eq!(sent.message_type, "image");
+    let message = &sent.body["messages"][0];
+    assert_eq!(
+        message["content"]["mediaUrl"],
+        "https://cdn.example.tz/receipt.png"
+    );
+    assert_eq!(message["content"]["caption"], "Your receipt");
 }
 
 /// A minimal SMTP server that accepts one message and returns its DATA
