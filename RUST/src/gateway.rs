@@ -39,6 +39,12 @@ impl Yekonga {
         }
     }
 
+    /// Sends an HTML email over SMTP (Go's `SendEmail` built-in path), using
+    /// `mail.smtp` (host, port, TLS, credentials, from address).
+    pub async fn send_email_builtin(&self, to: &str, subject: &str, html: &str) -> SendResponse {
+        smtp_send(&self.config().mail.smtp, to, subject, html).await
+    }
+
     /// Sends a WhatsApp text message through the configured provider (Go's
     /// `SendWhatsapp` built-in path). Only Infobip is supported.
     pub async fn send_whatsapp_builtin(&self, phone: &str, text: &str) -> SendResponse {
@@ -51,6 +57,74 @@ impl Yekonga {
                 ..Default::default()
             },
         }
+    }
+}
+
+/// Sends one HTML email via SMTP (port of `helper/mail.go`'s `sendSMTP`).
+/// With `secure`, connects over TLS; otherwise a plain connection with
+/// STARTTLS when the server offers it. Credentials are used when a username
+/// is set.
+async fn smtp_send(
+    config: &crate::config::SmtpConfig,
+    to: &str,
+    subject: &str,
+    html: &str,
+) -> SendResponse {
+    use lettre::transport::smtp::authentication::Credentials;
+    use lettre::transport::smtp::AsyncSmtpTransport;
+    use lettre::{AsyncTransport, Message, Tokio1Executor};
+
+    let failed = |message: String| SendResponse {
+        status: "FAILED".into(),
+        message,
+        ..Default::default()
+    };
+    if config.host.is_empty() || config.from.is_empty() {
+        return failed("SMTP is not configured".into());
+    }
+
+    let email = match Message::builder()
+        .from(match config.from.parse() {
+            Ok(from) => from,
+            Err(e) => return failed(format!("invalid from address: {e}")),
+        })
+        .to(match to.parse() {
+            Ok(to) => to,
+            Err(e) => return failed(format!("invalid recipient: {e}")),
+        })
+        .subject(subject)
+        .header(lettre::message::header::ContentType::TEXT_HTML)
+        .body(html.to_string())
+    {
+        Ok(email) => email,
+        Err(e) => return failed(e.to_string()),
+    };
+
+    let mut builder = if config.secure {
+        match AsyncSmtpTransport::<Tokio1Executor>::relay(&config.host) {
+            Ok(builder) => builder,
+            Err(e) => return failed(e.to_string()),
+        }
+    } else {
+        AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&config.host)
+    };
+    if config.port > 0 {
+        builder = builder.port(config.port as u16);
+    }
+    if !config.username.is_empty() {
+        builder = builder.credentials(Credentials::new(
+            config.username.clone(),
+            config.password.clone(),
+        ));
+    }
+
+    match builder.build().send(email).await {
+        Ok(_) => SendResponse {
+            status: "SUCCESS".into(),
+            message: "sent".into(),
+            ..Default::default()
+        },
+        Err(e) => failed(e.to_string()),
     }
 }
 

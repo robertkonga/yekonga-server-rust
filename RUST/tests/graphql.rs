@@ -160,10 +160,16 @@ async fn errors_and_unported_arguments() {
         "Invalid request format. Please check your input fields."
     );
 
-    let group = gql(&app, "{ orders(groupBy: [title]) { title } }", json!({})).await;
+    // groupBy is supported on the plural list, but not yet on a paginated query.
+    let group = gql(
+        &app,
+        "{ orderPaginate(groupBy: [title]) { data { title } } }",
+        json!({}),
+    )
+    .await;
     assert_eq!(
         group["errors"][0]["message"],
-        "groupBy is not supported by the Rust port yet"
+        "groupBy on a paginated query is not supported by the Rust port yet"
     );
 }
 
@@ -197,6 +203,41 @@ async fn distinct_dedupes_by_field() {
         distinct["data"]["orders"],
         json!([{"title": "A"}, {"title": "B"}])
     );
+}
+
+#[tokio::test]
+async fn group_by_returns_one_record_per_group() {
+    let app = app_with(json!({}));
+    for title in ["A", "A", "B", "C"] {
+        gql(
+            &app,
+            r#"mutation($t: String){ createOrder(input: {title: $t}) { success } }"#,
+            json!({ "t": title }),
+        )
+        .await;
+    }
+
+    // One record per distinct title, in orderBy order (the rows are sorted by
+    // the group key, so each group's first row comes out ordered).
+    let grouped = gql(
+        &app,
+        "{ orders(groupBy: [title], orderBy: {title: ASC}) { title } }",
+        json!({}),
+    )
+    .await;
+    assert_eq!(
+        grouped["data"]["orders"],
+        json!([{"title": "A"}, {"title": "B"}, {"title": "C"}])
+    );
+
+    // limit/page window the groups, not the raw rows (page 2 of size 1 = B).
+    let windowed = gql(
+        &app,
+        "{ orders(groupBy: [title], orderBy: {title: ASC}, page: 2, limit: 1) { title } }",
+        json!({}),
+    )
+    .await;
+    assert_eq!(windowed["data"]["orders"], json!([{"title": "B"}]));
 }
 
 #[tokio::test]
